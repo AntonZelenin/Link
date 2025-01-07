@@ -20,34 +20,26 @@ fn main() {
 
 #[component]
 fn App() -> Element {
+    let selected_chat = use_signal(|| None::<(String, Vec<(String, String)>)>);
+
     rsx! {
-        Container {}
+        div {
+            class: "container",
+            Sidebar { selected_chat: selected_chat }
+            MainView { selected_chat: selected_chat }
+        }
 
-        // Global app resources
         document::Link { rel: "stylesheet", href: MAIN_CSS }
-
         Router::<Route> {}
     }
 }
 
 #[component]
-fn Container() -> Element {
+fn Sidebar(selected_chat: Signal<Option<(String, Vec<(String, String)>)>>) -> Element {
     rsx! {
-        div {
-            class: "container",
-            Sidebar {},
-            Main {},
-        }
-    }
-}
-
-#[component]
-fn Sidebar() -> Element {
-    rsx! {
-        div {
-            class: "sidebar",
-            SearchBar {},
-            ChatList {},
+        div { class: "sidebar",
+            SearchBar {}
+            ChatList { selected_chat: selected_chat }
         }
     }
 }
@@ -55,48 +47,62 @@ fn Sidebar() -> Element {
 #[component]
 fn SearchBar() -> Element {
     rsx! {
-        div {
-            class: "search-bar",
+        div { class: "search-bar",
             input {
-                type: "text",
-                placeholder: "Search",
+                "type": "text",
+                placeholder: "Search"
             }
         }
     }
 }
 
 #[component]
-fn ChatList() -> Element {
+fn ChatList(selected_chat: Signal<Option<(String, Vec<(String, String)>)>>) -> Element {
+    let chats = vec![
+        (
+            "John Doe".to_string(),
+            vec![("John".to_string(), "Hello!".to_string())],
+        ),
+        (
+            "Jane Smith".to_string(),
+            vec![("Jane".to_string(), "Hi there!".to_string())],
+        ),
+    ];
+
     rsx! {
-        div {
-            class: "chat-list",
-            ChatItem {
-                title: "John Doe",
-                preview: "Hello, how are you?",
-                time: "12:00 PM",
-            },
+        div { class: "chat-list",
+            {chats.into_iter().map(|(title, messages)| {
+                let title_clone = title.clone();
+                let messages_clone = messages.clone();
+                rsx! {
+                    ChatItem {
+                        key: "{title}",
+                        title: title_clone,
+                        preview: messages_clone.first().map_or("".to_string(), |(_, content)| content.clone()),
+                        time: "14:32".to_string(),
+                        on_click: move |_| selected_chat.set(Some((title.clone(), messages.clone())))
+                    }
+                }
+            })}
         }
     }
 }
 
 #[component]
-fn ChatInfo(title: String, preview: String, time: String) -> Element {
+fn ChatItem(title: String, preview: String, time: String, on_click: EventHandler<()>) -> Element {
     rsx! {
         div {
             class: "chat-item",
-            div {
-                class: "chat-info",
-                div {
-                    class: "chat-title",
+            onclick: move |_| on_click.call(()),
+            div { class: "chat-info",
+                div { class: "chat-title",
                     "{title}"
                 }
-                div {
-                    class: "chat-preview",
+                div { class: "chat-preview",
                     "{preview}"
                 }
             }
-            div {
-                class: "chat-time",
+            div { class: "chat-time",
                 "{time}"
             }
         }
@@ -104,99 +110,83 @@ fn ChatInfo(title: String, preview: String, time: String) -> Element {
 }
 
 #[component]
-fn ChatItem(title: String, preview: String, time: String) -> Element {
-    rsx! {
-        div {
-            class: "chat-item",
-            div {
-                class: "chat-info",
-                div {
-                    class: "chat-title",
-                    "{title}"
-                }
-                div {
-                    class: "chat-preview",
-                    "{preview}"
-                }
-            }
-            div {
-                class: "chat-time",
-                "{time}"
-            }
-        }
-    }
-}
-
-#[component]
-fn Main() -> Element {
+fn MainView(selected_chat: Signal<Option<(String, Vec<(String, String)>)>>) -> Element {
     rsx! {
         div {
             class: "main",
-            Chat {
-                messages: vec![
-                    ("John Doe".to_string(), "Hello, how are you?".to_string()),
-                    ("Jane Doe".to_string(), "I'm fine, thank you!".to_string()),
-                ],
-                on_send: |message| {
-                    log::info!("Sending message: {}", message);
-                },
-            },
-        }
-    }
-}
-
-#[component]
-fn Chat(messages: Vec<(String, String)>, on_send: Callback<String>) -> Element {
-    rsx! {
-        div {
-            class: "chat",
-            div {
-                class: "chat-messages",
-                for (author, content) in messages {
-                    div {
-                        class: "chat-message",
+            {
+                match &*selected_chat.read() {
+                    Some((title, messages)) => rsx! {
+                        Chat {
+                            title: title.clone(),
+                            messages: messages.clone(),
+                            on_send: move |msg: String| {
+                                println!("Sending message: {}", msg);
+                            }
+                        }
+                    },
+                    None => rsx! {
                         div {
-                            class: "message-author",
-                            "{author}"
-                        },
-                        div {
-                            class: "message-content",
-                            "{content}"
-                        },
+                            class: "no-chat-selected",
+                            "Select a chat to start messaging!"
+                        }
                     }
-                },
-            },
-            MessageInput { on_send: on_send.clone() },
-        }
-    }
-}
-
-#[component]
-fn MessageInput(on_send: Callback<String>) -> Element {
-    let mut input_value = use_signal(|| "".to_string());
-
-    let handle_send = {
-        let mut input_value = input_value.clone();
-        move |_| {
-            if !input_value().is_empty() {
-                on_send(input_value.to_string());
-                input_value.set("".to_string());
+                }
             }
         }
-    };
+    }
+}
+
+#[component]
+fn Chat(title: String, messages: Vec<(String, String)>, on_send: EventHandler<String>) -> Element {
+    rsx! {
+        div { class: "chat visible",
+            div { class: "chat-header",
+                "{title}"
+            }
+            div { class: "chat-messages",
+                {messages.into_iter().map(|(author, content)| {
+                    rsx! {
+                        div {
+                            key: "{author}-{content}",
+                            class: "chat-message",
+                            div { class: "message-author",
+                                "{author}"
+                            }
+                            div { class: "message-content",
+                                "{content}"
+                            }
+                        }
+                    }
+                })}
+            }
+            MessageInput {
+                on_send: on_send
+            }
+        }
+    }
+}
+
+#[component]
+fn MessageInput(on_send: EventHandler<String>) -> Element {
+    let mut input_value = use_signal(String::new);
 
     rsx! {
-        div {
-            class: "message-input-container",
+        div { class: "message-input-container",
             input {
                 class: "message-input",
-                value: "{input_value()}",
+                value: "{input_value.read()}",
                 placeholder: "Type your message...",
-                oninput: move |e| input_value.set(e.value().clone()),
+                oninput: move |evt| input_value.set(evt.value().clone())
             }
             button {
                 class: "message-send-button",
-                onclick: handle_send,
+                onclick: move |_| {
+                    if !input_value.read().is_empty() {
+                        on_send.call(input_value.read().clone());
+                        input_value.set(String::new());
+                    }
+                },
                 "Send"
             }
         }
