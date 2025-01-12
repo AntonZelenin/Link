@@ -36,11 +36,17 @@ struct AuthError {
 
 #[component]
 fn App() -> Element {
+    // eval("document.title = 'O r B ї t'").expect("Failed to set document title");
+    eval("document.title = '< l ї n k >'").expect("Failed to set document title");
+
     let is_authenticated = use_signal(|| false);
     let show_login_modal = use_signal(|| true);
     let selected_chat = use_signal(|| None::<(String, Vec<(String, String)>)>);
 
     rsx! {
+        document::Link { rel: "stylesheet", href: MAIN_CSS }
+        Router::<Route> {}
+
         div {
             class: "container",
             // Only show main UI if authenticated
@@ -72,10 +78,7 @@ fn App() -> Element {
 }
 
 #[component]
-fn LoginModal(
-    is_authenticated: Signal<bool>,
-    show_modal: Signal<bool>,
-) -> Element {
+fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
     let mut active_tab = use_signal(|| "login".to_string());
     let mut username = use_signal(String::new);
     let mut password = use_signal(String::new);
@@ -105,22 +108,24 @@ fn LoginModal(
                 .map_err(|e| e.to_string())?;
 
             if response.status().is_success() {
-                let auth_data: AuthResponse = response.json().await
-                    .map_err(|e| e.to_string())?;
+                let auth_data: AuthResponse = response.json().await.map_err(|e| e.to_string())?;
 
                 if let Some(storage) = web_sys::window()
                     .and_then(|w| w.local_storage().ok())
                     .and_then(|s| s)
                 {
-                    storage.set_item("access_token", &auth_data.access_token).ok();
-                    storage.set_item("refresh_token", &auth_data.refresh_token).ok();
+                    storage
+                        .set_item("access_token", &auth_data.access_token)
+                        .ok();
+                    storage
+                        .set_item("refresh_token", &auth_data.refresh_token)
+                        .ok();
                     storage.set_item("user_id", &auth_data.user_id).ok();
                 }
 
                 Ok(())
             } else {
-                let error: AuthError = response.json().await
-                    .map_err(|e| e.to_string())?;
+                let error: AuthError = response.json().await.map_err(|e| e.to_string())?;
                 Err(error.detail)
             }
         }
@@ -142,28 +147,29 @@ fn LoginModal(
 
     rsx! {
         div {
-            class: "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center",
+            class: "login-modal",
             div {
-                class: "bg-white rounded-lg p-6 w-full max-w-md",
-                h2 {
-                    class: "text-xl font-bold mb-4",
-                    "Welcome to Messenger"
+                class: "login-modal-content",
+                div {
+                    class: "login-modal-header",
+                    // "Welcome to OrBїt"
+                    "Welcome to Lїnk"
                 }
 
                 div {
-                    class: "flex mb-4 border-b",
-                    button {
+                    class: "login-modal-tabs",
+                    div {
                         class: format_args!(
-                            "flex-1 py-2 {}",
-                            if *active_tab.read() == "login" { "border-b-2 border-blue-500" } else { "" }
+                            "login-modal-tab {}",
+                            if *active_tab.read() == "login" { "active" } else { "" }
                         ),
                         onclick: move |_| active_tab.set("login".to_string()),
                         "Login"
                     }
-                    button {
+                    div {
                         class: format_args!(
-                            "flex-1 py-2 {}",
-                            if *active_tab.read() == "register" { "border-b-2 border-blue-500" } else { "" }
+                            "login-modal-tab {}",
+                            if *active_tab.read() == "register" { "active" } else { "" }
                         ),
                         onclick: move |_| active_tab.set("register".to_string()),
                         "Register"
@@ -175,10 +181,10 @@ fn LoginModal(
                         ev.prevent_default();
                         auth_request.restart();
                     },
-                    class: "space-y-4",
+                    class: "login-modal-form",
 
                     input {
-                        class: "w-full p-2 border rounded",
+                        class: "login-modal-input",
                         "type": "text",
                         placeholder: "Username",
                         value: "{username}",
@@ -186,7 +192,7 @@ fn LoginModal(
                     }
 
                     input {
-                        class: "w-full p-2 border rounded",
+                        class: "login-modal-input",
                         "type": "password",
                         placeholder: "Password",
                         value: "{password}",
@@ -197,7 +203,7 @@ fn LoginModal(
                         if !error.read().is_empty() {
                             rsx! {
                                 div {
-                                    class: "text-red-500 text-sm",
+                                    class: "login-modal-error",
                                     "{error}"
                                 }
                             }
@@ -207,16 +213,16 @@ fn LoginModal(
                     }
 
                     div {
-                        class: "flex justify-end space-x-2 mt-4",
+                        class: "login-modal-buttons",
                         button {
                             "type": "button",
-                            class: "px-4 py-2 border rounded hover:bg-gray-50",
+                            class: "login-modal-button cancel",
                             onclick: move |_| show_modal.set(false),
                             "Cancel"
                         }
                         button {
                             "type": "submit",
-                            class: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50",
+                            class: "login-modal-button submit",
                             disabled: auth_value.is_some(),
                             {if auth_value.is_some() {
                                 "Processing..."
