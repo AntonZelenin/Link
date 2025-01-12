@@ -1,5 +1,7 @@
 use dioxus::prelude::*;
-
+use dioxus::web::Config;
+use dioxus::web::launch::launch_cfg;
+use web_sys::js_sys::eval;
 use ui::Navbar;
 use views::Home;
 
@@ -20,6 +22,8 @@ fn main() {
 
 #[component]
 fn App() -> Element {
+    // eval("document.title = '< L ї n k >'").expect("Failed to set document title");
+    eval("document.title = 'O r B ї t'").expect("Failed to set document title");
     let selected_chat = use_signal(|| None::<(String, Vec<(String, String)>)>);
 
     rsx! {
@@ -82,6 +86,7 @@ fn ChatList(selected_chat: Signal<Option<(String, Vec<(String, String)>)>>) -> E
                         time: "14:32".to_string(),
                         on_click: move |_| selected_chat.set(Some((title.clone(), messages.clone())))
                     }
+                    ShortBorder {}
                 }
             })}
         }
@@ -190,5 +195,12 @@ fn MessageInput(on_send: EventHandler<String>) -> Element {
                 "Send"
             }
         }
+    }
+}
+
+#[component]
+fn ShortBorder() -> Element {
+    rsx! {
+        div { class: "short-border" }
     }
 }

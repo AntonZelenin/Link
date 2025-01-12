@@ -4508,6 +4508,7 @@ dependencies = [
  "dioxus",
  "log",
  "ui",
+ "web-sys",
 ]
 
 [[package]]
