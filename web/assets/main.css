@@ -300,3 +300,9 @@ body {
     background-color: #ccc;
     cursor: not-allowed;
 }
+
+.highlighted-text {
+    color: #7099A3;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
