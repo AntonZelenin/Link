@@ -4,73 +4,15 @@ use dioxus::dioxus_core::Element;
 use dioxus::hooks::{use_resource, use_signal};
 use dioxus::prelude::*;
 
+const SERVER_URL: &'static str = "http://185.191.177.247:55800";
+
 #[component]
 pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
     let mut active_tab = use_signal(|| "login".to_string());
-    let mut username = use_signal(String::new);
-    let mut password = use_signal(String::new);
-    let mut error = use_signal(String::new);
-
-    let mut auth_request = use_resource(move || {
-        let username = username.read().clone();
-        let password = password.read().clone();
-        let is_login = *active_tab.read() == "login";
-
-        async move {
-            if username.is_empty() || password.is_empty() {
-                return Err("Please fill in all fields".to_string());
-            }
-
-            let endpoint = if is_login { "login" } else { "users" };
-            let url = format!("http://185.191.177.247:55800/api/auth/v1/{}", endpoint);
-
-            let response = reqwest::Client::new()
-                .post(&url)
-                .json(&serde_json::json!({
-                    "username": username,
-                    "password": password,
-                }))
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-
-            if response.status().is_success() {
-                let auth_data: AuthResponse = response.json().await.map_err(|e| e.to_string())?;
-
-                if let Some(storage) = web_sys::window()
-                    .and_then(|w| w.local_storage().ok())
-                    .and_then(|s| s)
-                {
-                    storage
-                        .set_item("access_token", &auth_data.access_token)
-                        .ok();
-                    storage
-                        .set_item("refresh_token", &auth_data.refresh_token)
-                        .ok();
-                    storage.set_item("user_id", &auth_data.user_id).ok();
-                }
-
-                Ok(())
-            } else {
-                let error: AuthError = response.json().await.map_err(|e| e.to_string())?;
-                Err(error.detail)
-            }
-        }
-    });
-
-    // let auth_value = auth_request.value().read();
-    let auth_value = auth_request.cloned();
-
-    // Update error state based on auth request result
-    if let Some(Err(err)) = auth_value.as_ref() {
-        error.set(err.clone());
-    }
-
-    // Check for successful authentication
-    if let Some(Ok(_)) = auth_value.as_ref() {
-        is_authenticated.set(true);
-        show_modal.set(false);
-    }
+    let mut username = use_signal(|| String::new());
+    let mut password = use_signal(|| String::new());
+    let mut error = use_signal(|| String::new());
+    let mut processing = use_signal(|| false);
 
     rsx! {
         div {
@@ -85,31 +27,48 @@ pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> E
                         "<Lїnk>"
                     }
                 }
-
                 div {
                     class: "login-modal-tabs",
                     div {
-                        class: format_args!(
-                            "login-modal-tab {}",
-                            if *active_tab.read() == "login" { "active" } else { "" }
-                        ),
+                        class: format_args!("login-modal-tab {}", if *active_tab.read() == "login" { "active" } else { "" }),
                         onclick: move |_| active_tab.set("login".to_string()),
                         "Login"
                     }
                     div {
-                        class: format_args!(
-                            "login-modal-tab {}",
-                            if *active_tab.read() == "register" { "active" } else { "" }
-                        ),
+                        class: format_args!("login-modal-tab {}", if *active_tab.read() == "register" { "active" } else { "" }),
                         onclick: move |_| active_tab.set("register".to_string()),
                         "Register"
                     }
                 }
-
                 form {
-                    onsubmit: move |ev| {
-                        ev.prevent_default();
-                        auth_request.restart();
+                    onsubmit:
+                        move |ev| {
+                            ev.prevent_default();
+                            let auth_result = use_resource(move || async move {
+                                perform_auth(
+                                    active_tab.read().clone(),
+                                    username.read().clone(),
+                                    password.read().clone(),
+                                ).await
+                            });
+
+                            match auth_result.read().as_ref() {
+                                Some(Ok(auth_data)) => {
+                                    if let Some(storage) = web_sys::window()
+                                        .and_then(|w| w.local_storage().ok())
+                                        .flatten()
+                                    {
+                                        storage.set_item("access_token", &auth_data.access_token).ok();
+                                        storage.set_item("refresh_token", &auth_data.refresh_token).ok();
+                                        storage.set_item("user_id", &auth_data.user_id).ok();
+                                    }
+                                    is_authenticated.set(true);
+                                    show_modal.set(false);
+                                }
+                                Some(Err(e)) => error.set(e.clone()),
+                                None => {}
+                            }
+                            processing.set(false);
                     },
                     class: "login-modal-form",
 
@@ -129,16 +88,10 @@ pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> E
                         oninput: move |e| password.set(e.value().clone())
                     }
 
-                    {
-                        if !error.read().is_empty() {
-                            rsx! {
-                                div {
-                                    class: "login-modal-error",
-                                    "{error}"
-                                }
-                            }
-                        } else {
-                            rsx! {}
+                    if !error.read().is_empty() {
+                        div {
+                            class: "login-modal-error",
+                            "{error}"
                         }
                     }
 
@@ -153,8 +106,8 @@ pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> E
                         button {
                             "type": "submit",
                             class: "login-modal-button submit",
-                            disabled: auth_value.is_some(),
-                            {if auth_value.is_some() {
+                            disabled: *processing.read(),
+                            {if *processing.read() {
                                 "Processing..."
                             } else if *active_tab.read() == "login" {
                                 "Login"
@@ -166,5 +119,40 @@ pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> E
                 }
             }
         }
+    }
+}
+
+async fn perform_auth(
+    active_tab: String,
+    username: String,
+    password: String,
+) -> Result<AuthResponse, String> {
+    if username.is_empty() || password.is_empty() {
+        return Err("Please fill in all fields".into());
+    }
+    let endpoint = if active_tab == "login" {
+        "login"
+    } else {
+        "users"
+    };
+    let path = format!("/api/auth/v1/{}", endpoint);
+    let url = SERVER_URL.to_string() + &path;
+
+    let resp = reqwest::Client::new()
+        .post(&url)
+        .json(&serde_json::json!({ "username": username, "password": password }))
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if resp.status().is_success() {
+        resp.json::<AuthResponse>()
+            .await
+            .map_err(|_| "Failed to parse auth response".into())
+    } else {
+        let err = resp.json::<AuthError>().await.unwrap_or(AuthError {
+            detail: "Unknown error".into(),
+        });
+        Err(err.detail)
     }
 }
