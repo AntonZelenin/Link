@@ -8,6 +8,10 @@ use web_sys::js_sys::eval;
 
 mod views;
 
+// todo For today:
+// run server side
+// make auth work
+
 #[derive(Debug, Clone, Routable, PartialEq)]
 #[rustfmt::skip]
 enum Route {
@@ -36,8 +40,7 @@ struct AuthError {
 
 #[component]
 fn App() -> Element {
-    // eval("document.title = 'O r B ї t'").expect("Failed to set document title");
-    eval("document.title = '< l ї n k >'").expect("Failed to set document title");
+    eval("document.title = '< L ї n k >'").expect("Failed to set document title");
 
     let is_authenticated = use_signal(|| false);
     let show_login_modal = use_signal(|| true);
