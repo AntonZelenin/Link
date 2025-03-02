@@ -4,6 +4,7 @@ use dioxus::web::Config;
 use serde::{Deserialize, Serialize};
 use ui::Navbar;
 use views::Home;
+use std::default::Default;
 use web_sys::js_sys::eval;
 
 mod views;

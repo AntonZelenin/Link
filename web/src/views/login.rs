@@ -1,10 +1,9 @@
 use crate::{AuthError, AuthResponse};
+use lcore::api::constants::AUTH_SERVICE_API_URL;
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::hooks::{use_resource, use_signal};
 use dioxus::prelude::*;
-
-const SERVER_URL: &'static str = "http://185.191.177.247:55800";
 
 #[component]
 pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
@@ -135,8 +134,7 @@ async fn perform_auth(
     } else {
         "users"
     };
-    let path = format!("/api/auth/v1/{}", endpoint);
-    let url = SERVER_URL.to_string() + &path;
+    let url = AUTH_SERVICE_API_URL.to_string() + &endpoint;
 
     let resp = reqwest::Client::new()
         .post(&url)
