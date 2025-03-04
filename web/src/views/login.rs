@@ -59,7 +59,6 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
     rsx! {
         form {
             onsubmit: move |ev| {
-                ev.prevent_default();
                 processing.set(true);
                 error.set("".to_string());
                 let req = utils::from_map::<LoginRequest>(
@@ -143,7 +142,6 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
     rsx! {
         form {
             onsubmit: move |ev| {
-                ev.prevent_default();
                 processing.set(true);
                 error.set("".to_string());
                 let req = utils::from_map::<RegisterRequest>(
