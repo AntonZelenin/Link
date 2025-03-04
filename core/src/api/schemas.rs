@@ -1,14 +1,20 @@
-use serde::{Deserialize, Serialize};
 use crate::helpers::types::{ChatId, UserId};
+use serde::{Deserialize, Serialize};
 
-#[derive(Serialize)]
-pub struct RegisterData {
+#[derive(Clone, Serialize, Deserialize)]
+pub struct LoginRequest {
     pub username: String,
     pub password: String,
 }
 
-#[derive(Serialize)]
-pub struct RefreshTokenData {
+#[derive(Clone, Serialize, Deserialize)]
+pub struct RegisterRequest {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct RefreshTokenRequest {
     pub refresh_token: String,
 }
 

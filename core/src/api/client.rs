@@ -106,7 +106,7 @@ impl Client {
 
     pub async fn register(&mut self, username: &str, password: &str) -> ApiResult<String> {
         let url = &format!("http://{}/users", USER_SERVICE_API_URL);
-        let register_data = schemas::RegisterData {
+        let register_data = schemas::RegisterRequest {
             username: username.to_string(),
             password: password.to_string(),
         };
@@ -383,7 +383,7 @@ impl Client {
         }
         rp.set_cant_reauthenticate();
 
-        let refresh_token_data = schemas::RefreshTokenData {
+        let refresh_token_data = schemas::RefreshTokenRequest {
             refresh_token: self
                 .auth_tokens
                 .as_ref()
