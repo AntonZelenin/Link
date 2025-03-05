@@ -8,6 +8,7 @@ use lcore::api::schemas::{LoginRequest, RegisterRequest};
 use lcore::third_party::utils::form_values_to_string;
 use lcore::traits::ToJson;
 use lcore::utils;
+use wasm_bindgen::prelude::*;
 
 #[component]
 pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
@@ -60,33 +61,41 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
         form {
             onsubmit: move |ev| {
                 processing.set(true);
-                error.set("".to_string());
-                let req = utils::from_map::<LoginRequest>(
-                     &form_values_to_string(&ev.values())
-                ).unwrap();
-                let auth_result = use_resource(move || {
-                    let req_clone = req.clone();
-                    async move {
-                        login(req_clone).await
+                error.set(String::new());
+
+                let req = match utils::from_map::<LoginRequest>(
+                    &form_values_to_string(&ev.values())
+                ) {
+                    Ok(request) => request,
+                    Err(_) => {
+                        error.set("Invalid form data".to_string());
+                        processing.set(false);
+                        return;
                     }
-                });
-                match auth_result.read().as_ref() {
-                    Some(Ok(auth_data)) => {
-                        if let Some(storage) = web_sys::window()
-                            .and_then(|w| w.local_storage().ok())
-                            .flatten()
-                        {
-                            storage.set_item("access_token", &auth_data.access_token).ok();
-                            storage.set_item("refresh_token", &auth_data.refresh_token).ok();
-                            storage.set_item("user_id", &auth_data.user_id).ok();
+                };
+                spawn(async move {
+                    match login(req).await {
+                        Ok(auth_data) => {
+                            web_sys::console::log_1(&"ok".into());
+                            if let Some(storage) = web_sys::window()
+                                .and_then(|w| w.local_storage().ok())
+                                .flatten()
+                            {
+                                storage.set_item("access_token", &auth_data.access_token).ok();
+                                storage.set_item("refresh_token", &auth_data.refresh_token).ok();
+                                storage.set_item("user_id", &auth_data.user_id).ok();
+                            }
+                            is_authenticated.set(true);
+                            show_modal.set(false);
                         }
-                        is_authenticated.set(true);
-                        show_modal.set(false);
+                        Err(e) => {
+                            web_sys::console::log_1(&"error".into());
+                            web_sys::console::log_1(&e.clone().into());
+                            error.set(e);
+                        }
                     }
-                    Some(Err(e)) => error.set(e.clone()),
-                    None => {}
-                }
-                processing.set(false);
+                    processing.set(false);
+                });
             },
             class: "login-modal-form",
 
@@ -218,14 +227,16 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
 }
 
 async fn login(login_req: LoginRequest) -> Result<AuthResponse, String> {
-    let url = AUTH_SERVICE_API_URL.to_string() + "/login";
+    let url = AUTH_SERVICE_API_URL.to_string() + "login";
 
+    web_sys::console::log_1(&"login".into());
     let resp = reqwest::Client::new()
         .post(&url)
         .json(&login_req.to_json())
         .send()
         .await
         .map_err(|e| e.to_string())?;
+    web_sys::console::log_1(&"ok login".into());
 
     if resp.status().is_success() {
         resp.json::<AuthResponse>()
