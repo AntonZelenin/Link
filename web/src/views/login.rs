@@ -1,11 +1,14 @@
+use crate::SharedClient;
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::hooks::{use_resource, use_signal};
 use dioxus::prelude::*;
+use lcore::api::client::Client;
 use lcore::api::schemas::{AuthError, AuthResponse, LoginRequest, RegisterRequest};
 use lcore::third_party::utils::form_values_to_string;
 use lcore::traits::ToJson;
 use lcore::utils;
+use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 
 #[component]
@@ -54,6 +57,7 @@ pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> E
 pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
     let mut error = use_signal(|| String::new());
     let mut processing = use_signal(|| false);
+    let client = use_context::<SharedClient>();
 
     rsx! {
         form {
@@ -71,10 +75,16 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
                         return;
                     }
                 };
+
+                // client is an Arc, so when we clone it, we're just cloning the reference
+                // cloning  is needed to move the client into the async block
+                let client = client.clone();
+
                 spawn(async move {
-                    match login(req).await {
+                    match client.login(req).await {
                         Ok(auth_data) => {
-                            web_sys::console::log_1(&"ok".into());
+                            web_sys::console::log_1(&"Login successful".into());
+
                             if let Some(storage) = web_sys::window()
                                 .and_then(|w| w.local_storage().ok())
                                 .flatten()
@@ -83,11 +93,12 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
                                 storage.set_item("refresh_token", &auth_data.refresh_token).ok();
                                 storage.set_item("user_id", &auth_data.user_id).ok();
                             }
+
                             is_authenticated.set(true);
                             show_modal.set(false);
                         }
                         Err(e) => {
-                            web_sys::console::log_1(&"error".into());
+                            web_sys::console::log_1(&"Login failed".into());
                             web_sys::console::log_1(&e.clone().into());
                             error.set(e);
                         }
@@ -99,14 +110,14 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
 
             input {
                 class: "login-modal-input",
-                "type": "text",
+                r#type: "text",
                 placeholder: "Username",
                 name: "username"
             }
 
             input {
                 class: "login-modal-input",
-                "type": "password",
+                r#type: "password",
                 placeholder: "Password",
                 name: "password"
             }
@@ -121,16 +132,16 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
             div {
                 class: "login-modal-buttons",
                 button {
-                    "type": "button",
+                    r#type: "button",
                     class: "login-modal-button cancel",
                     onclick: move |_| show_modal.set(false),
                     "Cancel"
                 }
                 button {
-                    "type": "submit",
+                    r#type: "submit",
                     class: "login-modal-button submit",
                     disabled: *processing.read(),
-                    {if *processing.read() {
+                    { if *processing.read() {
                         "Processing..."
                     } else {
                         "Login"
@@ -145,39 +156,50 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
 pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
     let mut error = use_signal(|| String::new());
     let mut processing = use_signal(|| false);
+    let client = use_context::<SharedClient>();
 
     rsx! {
         form {
             onsubmit: move |ev| {
+                ev.prevent_default();
                 processing.set(true);
                 error.set("".to_string());
-                let req = utils::from_map::<RegisterRequest>(
+
+                let req = match utils::from_map::<RegisterRequest>(
                     &form_values_to_string(&ev.values())
-                ).unwrap();
-                let auth_result = use_resource(move || {
-                    let req_clone = req.clone();
-                    async move {
-                        register(req_clone).await
+                ) {
+                    Ok(req) => req,
+                    Err(_) => {
+                        error.set("Invalid form data".to_string());
+                        processing.set(false);
+                        return;
                     }
-                });
-                match auth_result.read().as_ref() {
-                    Some(Ok(auth_data)) => {
-                        if let Some(storage) = web_sys::window()
-                            .and_then(|w| w.local_storage().ok())
-                            .flatten()
-                        {
-                            storage.set_item("access_token", &auth_data.access_token).ok();
-                            storage.set_item("refresh_token", &auth_data.refresh_token).ok();
-                            storage.set_item("user_id", &auth_data.user_id).ok();
+                };
+
+                // client is an Arc, so when we clone it, we're just cloning the reference
+                // cloning  is needed to move the client into the async block
+                let client = client.clone();
+
+                spawn(async move {
+                    match client.register(req).await {
+                        Ok(auth_data) => {
+                            if let Some(storage) = web_sys::window()
+                                .and_then(|w| w.local_storage().ok())
+                                .flatten()
+                            {
+                                storage.set_item("access_token", &auth_data.access_token).ok();
+                                storage.set_item("refresh_token", &auth_data.refresh_token).ok();
+                                storage.set_item("user_id", &auth_data.user_id).ok();
+                            }
+                            is_authenticated.set(true);
+                            show_modal.set(false);
                         }
-                        is_authenticated.set(true);
-                        show_modal.set(false);
+                        Err(e) => error.set(e),
                     }
-                    Some(Err(e)) => error.set(e.clone()),
-                    None => {}
-                }
-                processing.set(false);
+                    processing.set(false);
+                });
             },
+
             class: "login-modal-form",
 
             input {

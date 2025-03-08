@@ -5,9 +5,31 @@ use crate::models::auth::Auth;
 use crate::{f, storage};
 use reqwest::{Response, StatusCode};
 use std::fmt;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 use url::Url;
+
 // type WriteMessageWs = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 // type ReadMessageWs = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
+
+#[derive(Clone)]
+pub struct SharedClient(Arc<RwLock<Client>>);
+
+impl SharedClient {
+    pub async fn login(&self, req: LoginRequest) -> Result<AuthResponse, String> {
+        let mut client = self.0.write().await;
+        client.login(req).await
+    }
+
+    pub async fn register(&self, req: RegisterRequest) -> Result<AuthResponse, String> {
+        let mut client = self.0.write().await;
+        client.register(req).await
+    }
+
+    pub fn new(client: Client) -> Self {
+        Self(Arc::new(RwLock::new(client)))
+    }
+}
 
 struct RequestParams {
     uri: String,
@@ -39,19 +61,19 @@ pub struct Client {
     store_auth_tokens_callback: Box<dyn Fn(&Auth)>,
     delete_auth_tokens_callback: Box<dyn Fn()>,
 
-    auth_service_api_url: &'static str,
-    user_service_api_url: &'static str,
-    message_service_api_url: &'static str,
+    auth_service_api_url: String,
+    user_service_api_url: String,
+    message_service_api_url: String,
     // write_message_ws: Option<WriteMessageWs>,
     // read_message_ws: Option<ReadMessageWs>,
 }
 
 impl Client {
-    pub async fn new(
+    pub fn new(
         auth_tokens: Option<Auth>,
-        auth_service_api_url: &'static str,
-        user_service_api_url: &'static str,
-        message_service_api_url: &'static str,
+        auth_service_api_url: String,
+        user_service_api_url: String,
+        message_service_api_url: String,
     ) -> Self {
         let obj = Self {
             client: reqwest::Client::new(),
@@ -481,15 +503,15 @@ impl Client {
     }
 
     fn auth_url(&self, endpoint: &str) -> String {
-        self.build_url(self.auth_service_api_url, endpoint)
+        self.build_url(self.auth_service_api_url.as_str(), endpoint)
     }
 
     fn user_url(&self, endpoint: &str) -> String {
-        self.build_url(self.user_service_api_url, endpoint)
+        self.build_url(self.user_service_api_url.as_str(), endpoint)
     }
 
     fn message_url(&self, endpoint: &str) -> String {
-        self.build_url(self.message_service_api_url, endpoint)
+        self.build_url(self.message_service_api_url.as_str(), endpoint)
     }
 
     fn build_url(&self, base: &str, endpoint: &str) -> String {

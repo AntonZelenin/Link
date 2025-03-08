@@ -27,3 +27,7 @@ pub fn init_config(core_path: &str, web_path: &str) {
         .set(load_web_config(core_path, web_path).expect("Failed to load config"))
         .unwrap();
 }
+
+pub fn get_config() -> &'static WebConfig {
+    CONFIG.get().expect("CONFIG is not initialized")
+}

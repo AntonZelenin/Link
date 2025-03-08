@@ -1,8 +1,11 @@
+use crate::config::CONFIG;
 use dioxus::prelude::*;
 use dioxus::web::launch::launch_cfg;
 use dioxus::web::Config;
+use lcore::api::client::{Client, SharedClient};
 use serde::{Deserialize, Serialize};
 use std::default::Default;
+use std::sync::{Arc, RwLock};
 use ui::Navbar;
 use views::Home;
 use web_sys::js_sys::eval;
@@ -20,7 +23,18 @@ enum Route {
 const MAIN_CSS: Asset = asset!("/assets/main.css");
 
 fn main() {
+    let config = config::get_config();
     config::init_config("../core/config.toml", "config.toml");
+    let client = Client::new(
+        None,
+        config.core.auth_service_api_url.clone(),
+        config.core.user_service_api_url.clone(),
+        config.core.message_service_api_url.clone(),
+    );
+    let shared_client = SharedClient::new(client);
+
+    use_context_provider(|| Signal::new(shared_client));
+
     launch(App);
 }
 
