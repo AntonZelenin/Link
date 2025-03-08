@@ -1,4 +1,5 @@
 pub mod api;
+pub mod config;
 pub mod helpers;
 pub mod models;
 pub mod prelude;

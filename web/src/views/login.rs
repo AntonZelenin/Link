@@ -1,10 +1,8 @@
-use crate::{AuthError, AuthResponse};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::hooks::{use_resource, use_signal};
 use dioxus::prelude::*;
-use lcore::api::constants::AUTH_SERVICE_API_URL;
-use lcore::api::schemas::{LoginRequest, RegisterRequest};
+use lcore::api::schemas::{AuthError, AuthResponse, LoginRequest, RegisterRequest};
 use lcore::third_party::utils::form_values_to_string;
 use lcore::traits::ToJson;
 use lcore::utils;
@@ -223,51 +221,5 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
                 }
             }
         }
-    }
-}
-
-async fn login(login_req: LoginRequest) -> Result<AuthResponse, String> {
-    let url = AUTH_SERVICE_API_URL.to_string() + "login";
-
-    web_sys::console::log_1(&"login".into());
-    let resp = reqwest::Client::new()
-        .post(&url)
-        .json(&login_req.to_json())
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-    web_sys::console::log_1(&"ok login".into());
-
-    if resp.status().is_success() {
-        resp.json::<AuthResponse>()
-            .await
-            .map_err(|_| "Failed to parse auth response".into())
-    } else {
-        let err = resp.json::<AuthError>().await.unwrap_or(AuthError {
-            detail: "Unknown error".into(),
-        });
-        Err(err.detail)
-    }
-}
-
-async fn register(register_req: RegisterRequest) -> Result<AuthResponse, String> {
-    let url = AUTH_SERVICE_API_URL.to_string() + "/register";
-
-    let resp = reqwest::Client::new()
-        .post(&url)
-        .json(&register_req.to_json())
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-
-    if resp.status().is_success() {
-        resp.json::<AuthResponse>()
-            .await
-            .map_err(|_| "Failed to parse auth response".into())
-    } else {
-        let err = resp.json::<AuthError>().await.unwrap_or(AuthError {
-            detail: "Unknown error".into(),
-        });
-        Err(err.detail)
     }
 }

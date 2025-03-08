@@ -71,3 +71,15 @@ pub struct ChatSearchResults {
 pub struct GetUsersByIdsRequest {
     pub user_ids: Vec<UserId>,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AuthResponse {
+    pub access_token: String,
+    pub  refresh_token: String,
+    pub  user_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AuthError {
+    pub detail: String,
+}

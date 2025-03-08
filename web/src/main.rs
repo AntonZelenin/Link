@@ -2,16 +2,13 @@ use dioxus::prelude::*;
 use dioxus::web::launch::launch_cfg;
 use dioxus::web::Config;
 use serde::{Deserialize, Serialize};
+use std::default::Default;
 use ui::Navbar;
 use views::Home;
-use std::default::Default;
 use web_sys::js_sys::eval;
 
+mod config;
 mod views;
-
-// todo For today:
-// run server side
-// make auth work
 
 #[derive(Debug, Clone, Routable, PartialEq)]
 #[rustfmt::skip]
@@ -23,20 +20,8 @@ enum Route {
 const MAIN_CSS: Asset = asset!("/assets/main.css");
 
 fn main() {
+    config::init_config("../core/config.toml", "config.toml");
     launch(App);
-}
-
-// API response structures
-#[derive(Debug, Serialize, Deserialize)]
-struct AuthResponse {
-    access_token: String,
-    refresh_token: String,
-    user_id: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct AuthError {
-    detail: String,
 }
 
 #[component]

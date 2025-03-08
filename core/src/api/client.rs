@@ -1,12 +1,11 @@
-use crate::api::constants::*;
 use crate::api::schemas;
+use crate::api::schemas::{AuthResponse, LoginRequest, RegisterRequest};
 use crate::helpers::types::{ChatId, UserId};
 use crate::models::auth::Auth;
-use crate::storage;
+use crate::{f, storage};
 use reqwest::{Response, StatusCode};
 use std::fmt;
 use url::Url;
-
 // type WriteMessageWs = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 // type ReadMessageWs = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 
@@ -39,17 +38,30 @@ pub struct Client {
     auth_tokens: Option<Auth>,
     store_auth_tokens_callback: Box<dyn Fn(&Auth)>,
     delete_auth_tokens_callback: Box<dyn Fn()>,
+
+    auth_service_api_url: &'static str,
+    user_service_api_url: &'static str,
+    message_service_api_url: &'static str,
     // write_message_ws: Option<WriteMessageWs>,
     // read_message_ws: Option<ReadMessageWs>,
 }
 
 impl Client {
-    pub async fn new(auth_tokens: Option<Auth>) -> Self {
-        let mut obj = Self {
+    pub async fn new(
+        auth_tokens: Option<Auth>,
+        auth_service_api_url: &'static str,
+        user_service_api_url: &'static str,
+        message_service_api_url: &'static str,
+    ) -> Self {
+        let obj = Self {
             client: reqwest::Client::new(),
             auth_tokens,
             store_auth_tokens_callback: Box::new(storage::store_auth_tokens),
             delete_auth_tokens_callback: Box::new(storage::delete_auth_tokens),
+
+            auth_service_api_url,
+            user_service_api_url,
+            message_service_api_url,
             // write_message_ws: None,
             // read_message_ws: None,
         };
@@ -65,91 +77,67 @@ impl Client {
         self.auth_tokens.is_some()
     }
 
-    pub async fn login(&mut self, username: &str, password: &str) -> ApiResult<String> {
-        let url = &format!("http://{}/login", AUTH_SERVICE_API_URL);
-        let form_params = [("username", username), ("password", password)];
+    pub async fn login(&mut self, login_req: LoginRequest) -> Result<AuthResponse, String> {
         let res = self
             .client
-            .post(url)
-            .form(&form_params)
+            .post(&self.auth_url("login"))
+            .json(&login_req)
             .send()
             .await
-            .map_err(|e| ApiError::RequestError(e.to_string()))?;
+            .map_err(|e| e.to_string())?;
 
         let status = res.status();
-        let data = res
-            .json::<serde_json::Value>()
-            .await
-            .map_err(|e| ApiError::DataError(e.to_string()))?;
+        let data: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
+
         if !status.is_success() {
-            return Err(ApiError::RequestError(
-                data["detail"].as_str().unwrap().to_string(),
-            ));
+            return Err(data["detail"]
+                .as_str()
+                .unwrap_or("Unknown error")
+                .to_string());
         }
 
-        let jwt = data["access_token"].to_string();
-        let refresh_token = data["refresh_token"].to_string();
-        if jwt.is_empty() || refresh_token.is_empty() {
-            panic!("JWT or refresh token is empty");
-        }
-        let user_id = data["user_id"].to_string().trim_matches('"').to_string();
+        let auth_response: AuthResponse =
+            serde_json::from_value(data).map_err(|e| e.to_string())?;
 
-        let jwt = jwt.trim_matches('"').to_string();
-        let refresh_token = refresh_token.trim_matches('"').to_string();
+        self.set_auth_tokens(Auth::new(
+            &auth_response.access_token,
+            &auth_response.refresh_token,
+        ));
 
-        self.set_auth_tokens(Auth::new(&jwt, &refresh_token));
-
-        // self.connect_to_message_ws(RequestParams::default()).await;
-
-        Ok(user_id)
+        Ok(auth_response)
     }
 
-    pub async fn register(&mut self, username: &str, password: &str) -> ApiResult<String> {
-        let url = &format!("http://{}/users", USER_SERVICE_API_URL);
-        let register_data = schemas::RegisterRequest {
-            username: username.to_string(),
-            password: password.to_string(),
-        };
+    pub async fn register(
+        &mut self,
+        register_req: RegisterRequest,
+    ) -> Result<AuthResponse, String> {
         let res = self
             .client
-            .post(url)
-            .json(&register_data)
+            .post(&self.user_url("users"))
+            .json(&register_req)
             .send()
             .await
-            .map_err(|e| ApiError::RequestError(e.to_string()))?;
+            .map_err(|e| e.to_string())?;
 
         let status = res.status();
-        let data = res
-            .json::<serde_json::Value>()
-            .await
-            .map_err(|e| ApiError::DataError(e.to_string()))?;
+        let data: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
+
         if !status.is_success() {
-            let errors = data["errors"].as_object().unwrap();
-            return Err(ApiError::RequestError(
-                errors
-                    .values()
-                    .filter_map(|v| v.as_str())
-                    .map(|v| v.to_owned())
-                    .collect::<Vec<String>>()
-                    .join("\n"),
-            ));
+            return Err(data["detail"]
+                .as_str()
+                .unwrap_or("Unknown error")
+                .to_string());
         }
 
-        let jwt = data["access_token"].to_string();
-        let refresh_token = data["refresh_token"].to_string();
-        if jwt.is_empty() || refresh_token.is_empty() {
-            panic!("JWT or refresh token is empty");
-        }
-        let user_id = data["user_id"].to_string().trim_matches('"').to_string();
+        let auth_response: AuthResponse =
+            serde_json::from_value(data).map_err(|e| e.to_string())?;
 
-        let jwt = jwt.trim_matches('"').to_string();
-        let refresh_token = refresh_token.trim_matches('"').to_string();
+        self.set_auth_tokens(Auth::new(
+            &auth_response.access_token,
+            &auth_response.refresh_token,
+        ));
 
-        self.set_auth_tokens(Auth::new(&jwt, &refresh_token));
-
-        // self.connect_to_message_ws(RequestParams::default()).await;
-
-        Ok(user_id)
+        Ok(auth_response)
     }
 
     pub async fn get_users_by_ids(
@@ -157,7 +145,7 @@ impl Client {
         user_ids: Vec<UserId>,
     ) -> ApiResult<schemas::UserSearchResults> {
         let rp = RequestParams {
-            uri: format!("http://{}/users/batch-query", USER_SERVICE_API_URL),
+            uri: self.user_url("users/batch-query"),
             body: Some(serde_json::to_value(&schemas::GetUsersByIdsRequest { user_ids }).unwrap()),
             ..Default::default()
         };
@@ -172,7 +160,7 @@ impl Client {
 
     pub async fn get_chats(&mut self) -> ApiResult<schemas::ChatSearchResults> {
         let rp = RequestParams {
-            uri: format!("http://{}/chats", MESSAGE_SERVICE_API_URL),
+            uri: self.message_url("chats"),
             ..Default::default()
         };
         match self.get(rp).await {
@@ -191,7 +179,7 @@ impl Client {
 
     pub async fn get_chat(&mut self, chat_id: ChatId) -> ApiResult<schemas::ChatModel> {
         let rp = RequestParams {
-            uri: format!("http://{}/chats/{}", MESSAGE_SERVICE_API_URL, chat_id),
+            uri: self.message_url(&f!("chats/{chat_id}")),
             ..Default::default()
         };
         let res = self.get(rp).await?;
@@ -206,7 +194,7 @@ impl Client {
 
     pub async fn mark_chat_as_read(&mut self, chat_id: ChatId) {
         let rp = RequestParams {
-            uri: format!("http://{}/chats/{}/read", MESSAGE_SERVICE_API_URL, chat_id),
+            uri: self.message_url(&f!("chats/{chat_id}/read")),
             ..Default::default()
         };
         match self.post(rp).await {
@@ -220,7 +208,7 @@ impl Client {
         username: String,
     ) -> ApiResult<schemas::UserSearchResults> {
         let rp = RequestParams {
-            uri: format!("http://{}/users", USER_SERVICE_API_URL),
+            uri: self.user_url("users"),
             query_params: vec![("username".parse().unwrap(), username)],
             ..Default::default()
         };
@@ -250,7 +238,7 @@ impl Client {
         chat: schemas::NewChatModel,
     ) -> ApiResult<schemas::ChatModel> {
         let rp = RequestParams {
-            uri: format!("http://{}/chats", MESSAGE_SERVICE_API_URL),
+            uri: self.message_url("chats"),
             body: Some(serde_json::to_value(&chat).unwrap()),
             ..Default::default()
         };
@@ -393,7 +381,7 @@ impl Client {
         };
         let res = self
             .client
-            .post(&format!("http://{}/refresh-token", AUTH_SERVICE_API_URL))
+            .post(&self.auth_url("refresh-token"))
             .json(&refresh_token_data)
             .send()
             .await
@@ -490,6 +478,24 @@ impl Client {
                 .expect("Unauthenticated")
                 .access_token
         )
+    }
+
+    fn auth_url(&self, endpoint: &str) -> String {
+        self.build_url(self.auth_service_api_url, endpoint)
+    }
+
+    fn user_url(&self, endpoint: &str) -> String {
+        self.build_url(self.user_service_api_url, endpoint)
+    }
+
+    fn message_url(&self, endpoint: &str) -> String {
+        self.build_url(self.message_service_api_url, endpoint)
+    }
+
+    fn build_url(&self, base: &str, endpoint: &str) -> String {
+        let base = base.trim_end_matches('/');
+        let endpoint = endpoint.trim_start_matches('/');
+        format!("{}/{}", base, endpoint)
     }
 }
 
