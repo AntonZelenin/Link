@@ -34,7 +34,7 @@ fn App() -> Element {
     );
     let shared_client = SharedClient::new(client);
 
-    use_context_provider(|| Signal::new(shared_client));
+    use_context_provider(|| shared_client);
 
     eval("document.title = '< L ї n k >'").expect("Failed to set document title");
 

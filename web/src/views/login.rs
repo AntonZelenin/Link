@@ -55,7 +55,7 @@ pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> E
 pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
     let mut error = use_signal(|| String::new());
     let mut processing = use_signal(|| false);
-    let client = use_context::<Signal<SharedClient>>();
+    let client = use_context::<SharedClient>();
 
     rsx! {
         form {
@@ -79,7 +79,7 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
                 let client = client.clone();
 
                 spawn(async move {
-                    match client.read().login(req).await {
+                    match client.login(req).await {
                         Ok(auth_data) => {
                             console::log_1(&"Login successful".into());
 
@@ -154,7 +154,7 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
 pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
     let mut error = use_signal(|| String::new());
     let mut processing = use_signal(|| false);
-    let client = use_context::<Signal<SharedClient>>();
+    let client = use_context::<SharedClient>();
 
     rsx! {
         form {
@@ -179,7 +179,7 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
                 let client = client.clone();
 
                 spawn(async move {
-                    match client.read().register(req).await {
+                    match client.register(req).await {
                         Ok(auth_data) => {
                             if let Some(storage) = web_sys::window()
                                 .and_then(|w| w.local_storage().ok())
