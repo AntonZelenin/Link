@@ -23,8 +23,8 @@ enum Route {
 const MAIN_CSS: Asset = asset!("/assets/main.css");
 
 fn main() {
+    config::init_config();
     let config = config::get_config();
-    config::init_config("../core/config.toml", "config.toml");
     let client = Client::new(
         None,
         config.core.auth_service_api_url.clone(),
@@ -37,7 +37,6 @@ fn main() {
 
     launch(App);
 }
-
 #[component]
 fn App() -> Element {
     eval("document.title = '< L ї n k >'").expect("Failed to set document title");

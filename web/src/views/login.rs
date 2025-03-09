@@ -1,7 +1,7 @@
 use crate::SharedClient;
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
-use dioxus::hooks::{use_resource, use_signal};
+use dioxus::hooks::use_signal;
 use dioxus::prelude::*;
 use lcore::api::client::Client;
 use lcore::api::schemas::{AuthError, AuthResponse, LoginRequest, RegisterRequest};
