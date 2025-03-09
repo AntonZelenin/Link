@@ -23,7 +23,7 @@ pub fn store_auth_tokens(tokens: &Auth) {
     let refresh_token_file_path = get_refresh_token_file_path();
     let creds_dir = get_credentials_dir();
 
-    if !get_credentials_dir().exists() {
+    if !creds_dir.exists() {
         fs::create_dir(creds_dir).expect("Failed to create the credentials directory");
     }
 
