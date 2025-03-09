@@ -92,7 +92,7 @@ fn store_user_id(user_id: &str) {
         fs::create_dir(creds_dir).expect("Failed to create the credentials directory");
     }
 
-    fs::write(user_id_file_path, user_id).expect("Failed to write the username file");
+    fs::write(user_id_file_path, user_id).expect("Failed to write the user ID file");
 }
 
 fn load_user_id() -> Option<String> {
