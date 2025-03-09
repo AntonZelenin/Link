@@ -3,16 +3,14 @@ use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::hooks::use_signal;
 use dioxus::prelude::*;
-use lcore::api::client::Client;
-use lcore::api::schemas::{AuthError, AuthResponse, LoginRequest, RegisterRequest};
+use lcore::api::schemas::{LoginRequest, RegisterRequest};
 use lcore::third_party::utils::form_values_to_string;
-use lcore::traits::ToJson;
 use lcore::utils;
-use std::sync::Arc;
-use wasm_bindgen::prelude::*;
+use web_sys::console;
 
 #[component]
 pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
+    console::log_1(&"Rendering login modal".into());
     let mut active_tab = use_signal(|| "login".to_string());
 
     rsx! {
@@ -57,7 +55,7 @@ pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> E
 pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
     let mut error = use_signal(|| String::new());
     let mut processing = use_signal(|| false);
-    let client = use_context::<SharedClient>();
+    let client = use_context::<Signal<SharedClient>>();
 
     rsx! {
         form {
@@ -81,9 +79,9 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
                 let client = client.clone();
 
                 spawn(async move {
-                    match client.login(req).await {
+                    match client.read().login(req).await {
                         Ok(auth_data) => {
-                            web_sys::console::log_1(&"Login successful".into());
+                            console::log_1(&"Login successful".into());
 
                             if let Some(storage) = web_sys::window()
                                 .and_then(|w| w.local_storage().ok())
@@ -98,8 +96,8 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
                             show_modal.set(false);
                         }
                         Err(e) => {
-                            web_sys::console::log_1(&"Login failed".into());
-                            web_sys::console::log_1(&e.clone().into());
+                            console::log_1(&"Login failed".into());
+                            console::log_1(&e.clone().into());
                             error.set(e);
                         }
                     }
@@ -156,7 +154,7 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
 pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
     let mut error = use_signal(|| String::new());
     let mut processing = use_signal(|| false);
-    let client = use_context::<SharedClient>();
+    let client = use_context::<Signal<SharedClient>>();
 
     rsx! {
         form {
@@ -181,7 +179,7 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
                 let client = client.clone();
 
                 spawn(async move {
-                    match client.register(req).await {
+                    match client.read().register(req).await {
                         Ok(auth_data) => {
                             if let Some(storage) = web_sys::window()
                                 .and_then(|w| w.local_storage().ok())

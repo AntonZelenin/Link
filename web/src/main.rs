@@ -1,13 +1,8 @@
-use crate::config::CONFIG;
 use dioxus::prelude::*;
-use dioxus::web::launch::launch_cfg;
-use dioxus::web::Config;
 use lcore::api::client::{Client, SharedClient};
-use serde::{Deserialize, Serialize};
 use std::default::Default;
-use std::sync::{Arc, RwLock};
-use ui::Navbar;
 use views::Home;
+use web_sys::console;
 use web_sys::js_sys::eval;
 
 mod config;
@@ -24,6 +19,12 @@ const MAIN_CSS: Asset = asset!("/assets/main.css");
 
 fn main() {
     config::init_config();
+
+    launch(App);
+}
+
+#[component]
+fn App() -> Element {
     let config = config::get_config();
     let client = Client::new(
         None,
@@ -35,10 +36,6 @@ fn main() {
 
     use_context_provider(|| Signal::new(shared_client));
 
-    launch(App);
-}
-#[component]
-fn App() -> Element {
     eval("document.title = '< L ї n k >'").expect("Failed to set document title");
 
     let is_authenticated = use_signal(|| false);
