@@ -75,8 +75,8 @@ pub struct GetUsersByIdsRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AuthResponse {
     pub access_token: String,
-    pub  refresh_token: String,
-    pub  user_id: String,
+    pub refresh_token: String,
+    pub user_id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
