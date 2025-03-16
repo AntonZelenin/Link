@@ -10,7 +10,6 @@ use web_sys::console;
 
 #[component]
 pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
-    console::log_1(&"Rendering login modal".into());
     let mut active_tab = use_signal(|| "login".to_string());
 
     rsx! {
@@ -159,7 +158,6 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
     rsx! {
         form {
             onsubmit: move |ev| {
-                ev.prevent_default();
                 processing.set(true);
                 error.set("".to_string());
 
