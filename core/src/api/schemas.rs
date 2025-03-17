@@ -19,24 +19,28 @@ pub struct RegisterRequest {
 
 fn validate_username(username: &str) -> Result<(), ValidationError> {
     if username.len() < 3 {
-        return Err(ValidationError::new("Please use at least 3 characters"));
+        let mut err = ValidationError::new("username_length");
+        err.message = Some("Please use at least 3 characters".into());
+        return Err(err);
     }
     if username.len() > 150 {
-        return Err(ValidationError::new(
-            "Maximum length of 150 characters exceeded",
-        ));
+        let mut err = ValidationError::new("username_length");
+        err.message = Some("Maximum length of 150 characters exceeded".into());
+        return Err(err);
     }
     Ok(())
 }
 
 fn validate_password(password: &str) -> Result<(), ValidationError> {
     if password.len() < 8 {
-        return Err(ValidationError::new("Please use at least 8 characters"));
+        let mut err = ValidationError::new("password_length");
+        err.message = Some("Please use at least 8 characters".into());
+        return Err(err);
     }
     if password.len() > 64 {
-        return Err(ValidationError::new(
-            "Maximum length of 64 characters exceeded",
-        ));
+        let mut err = ValidationError::new("password_length");
+        err.message = Some("Maximum length of 64 characters exceeded".into());
+        return Err(err);
     }
     Ok(())
 }

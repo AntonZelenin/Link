@@ -3,10 +3,10 @@ use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::hooks::use_signal;
 use dioxus::prelude::*;
-use validator::Validate;
 use lcore::api::schemas::{LoginRequest, RegisterRequest};
 use lcore::third_party::utils::form_values_to_string;
 use lcore::utils;
+use validator::Validate;
 use web_sys::console;
 
 #[component]
@@ -175,16 +175,23 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
 
                 if let Err(validation_errors) = req.validate() {
                     if let Some(errs) = validation_errors.field_errors().get("username") {
-                        let msg = errs.first().and_then(|e| e.message.clone().map(|m| m.to_string())).unwrap_or_else(|| "Invalid username".to_string());
-                        error_username.set(msg);
+                        if let Some(e) = errs.first() {
+                            if let Some(m) = &e.message {
+                                error_username.set(m.to_string());
+                            }
+                        }
                     }
                     if let Some(errs) = validation_errors.field_errors().get("password") {
-                        let msg = errs.first().and_then(|e| e.message.clone().map(|m| m.to_string())).unwrap_or_else(|| "Invalid password".to_string());
-                        error_password.set(msg);
+                        if let Some(e) = errs.first() {
+                            if let Some(m) = &e.message {
+                                error_password.set(m.to_string());
+                            }
+                        }
                     }
                     processing.set(false);
                     return;
                 }
+
 
                 let client = client.clone();
                 spawn(async move {
