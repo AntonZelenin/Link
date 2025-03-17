@@ -214,26 +214,27 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
             },
             class: "login-modal-form",
 
-            input {
-                class: "login-modal-input",
-                "type": "text",
-                placeholder: "Username",
-                name: "username"
-            }
-            if !error_username.read().is_empty() {
+            div {
+                class: "field-container",
+                input {
+                    class: "login-modal-input",
+                    r#type: "text",
+                    placeholder: "Username",
+                    name: "username"
+                }
                 div {
                     class: "login-modal-error",
                     "{error_username}"
                 }
             }
-
-            input {
-                class: "login-modal-input",
-                "type": "password",
-                placeholder: "Password",
-                name: "password"
-            }
-            if !error_password.read().is_empty() {
+            div {
+                class: "field-container",
+                input {
+                    class: "login-modal-input",
+                    r#type: "password",
+                    placeholder: "Password",
+                    name: "password"
+                }
                 div {
                     class: "login-modal-error",
                     "{error_password}"
