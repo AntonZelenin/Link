@@ -7,9 +7,10 @@ edition = "2021"
 lcore = { package = "link-core", path = "../core" }
 dioxus = { workspace = true, features = ["router"] }
 serde = { version = "1.0.217", features = ["derive"] }
-ui = { workspace = true }
-wasm-bindgen = "0.2.100"
+#ui = { workspace = true }
+#wasm-bindgen = "0.2.100"
 toml = "0.8.20"
+validator = { version = "0.20", features = ["derive"] }
 
 [dependencies.web-sys]
 version = "0.3"

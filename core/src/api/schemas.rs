@@ -1,5 +1,6 @@
 use crate::helpers::types::{ChatId, UserId};
 use serde::{Deserialize, Serialize};
+use validator::{Validate, ValidationError};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct LoginRequest {
@@ -7,10 +8,37 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Validate)]
 pub struct RegisterRequest {
+    #[validate(custom(function = "validate_username"))]
     pub username: String,
+
+    #[validate(custom(function = "validate_password"))]
     pub password: String,
+}
+
+fn validate_username(username: &str) -> Result<(), ValidationError> {
+    if username.len() < 3 {
+        return Err(ValidationError::new("Please use at least 3 characters"));
+    }
+    if username.len() > 150 {
+        return Err(ValidationError::new(
+            "Maximum length of 150 characters exceeded",
+        ));
+    }
+    Ok(())
+}
+
+fn validate_password(password: &str) -> Result<(), ValidationError> {
+    if password.len() < 8 {
+        return Err(ValidationError::new("Please use at least 8 characters"));
+    }
+    if password.len() > 64 {
+        return Err(ValidationError::new(
+            "Maximum length of 64 characters exceeded",
+        ));
+    }
+    Ok(())
 }
 
 #[derive(Serialize, Deserialize)]

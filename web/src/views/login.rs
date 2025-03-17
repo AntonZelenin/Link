@@ -3,6 +3,7 @@ use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::hooks::use_signal;
 use dioxus::prelude::*;
+use validator::Validate;
 use lcore::api::schemas::{LoginRequest, RegisterRequest};
 use lcore::third_party::utils::form_values_to_string;
 use lcore::utils;
@@ -148,10 +149,10 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
         }
     }
 }
-
 #[component]
 pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
-    let mut error = use_signal(|| String::new());
+    let mut error_username = use_signal(|| String::new());
+    let mut error_password = use_signal(|| String::new());
     let mut processing = use_signal(|| false);
     let client = use_context::<SharedClient>();
 
@@ -159,30 +160,37 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
         form {
             onsubmit: move |ev| {
                 processing.set(true);
-                error.set("".to_string());
+                error_username.set("".to_string());
+                error_password.set("".to_string());
 
-                let req = match utils::from_map::<RegisterRequest>(
-                    &form_values_to_string(&ev.values())
-                ) {
+                let req_result = utils::from_map::<RegisterRequest>(&form_values_to_string(&ev.values()));
+                let req = match req_result {
                     Ok(req) => req,
                     Err(_) => {
-                        error.set("Invalid form data".to_string());
+                        error_username.set("Invalid form data".to_string());
                         processing.set(false);
                         return;
                     }
                 };
 
-                // client is an Arc, so when we clone it, we're just cloning the reference
-                // cloning  is needed to move the client into the async block
-                let client = client.clone();
+                if let Err(validation_errors) = req.validate() {
+                    if let Some(errs) = validation_errors.field_errors().get("username") {
+                        let msg = errs.first().and_then(|e| e.message.clone().map(|m| m.to_string())).unwrap_or_else(|| "Invalid username".to_string());
+                        error_username.set(msg);
+                    }
+                    if let Some(errs) = validation_errors.field_errors().get("password") {
+                        let msg = errs.first().and_then(|e| e.message.clone().map(|m| m.to_string())).unwrap_or_else(|| "Invalid password".to_string());
+                        error_password.set(msg);
+                    }
+                    processing.set(false);
+                    return;
+                }
 
+                let client = client.clone();
                 spawn(async move {
                     match client.register(req).await {
                         Ok(auth_data) => {
-                            if let Some(storage) = web_sys::window()
-                                .and_then(|w| w.local_storage().ok())
-                                .flatten()
-                            {
+                            if let Some(storage) = web_sys::window().and_then(|w| w.local_storage().ok()).flatten() {
                                 storage.set_item("access_token", &auth_data.access_token).ok();
                                 storage.set_item("refresh_token", &auth_data.refresh_token).ok();
                                 storage.set_item("user_id", &auth_data.user_id).ok();
@@ -190,12 +198,13 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
                             is_authenticated.set(true);
                             show_modal.set(false);
                         }
-                        Err(e) => error.set(e),
+                        Err(e) => {
+                            error_username.set(e);
+                        }
                     }
                     processing.set(false);
                 });
             },
-
             class: "login-modal-form",
 
             input {
@@ -204,6 +213,12 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
                 placeholder: "Username",
                 name: "username"
             }
+            if !error_username.read().is_empty() {
+                div {
+                    class: "login-modal-error",
+                    "{error_username}"
+                }
+            }
 
             input {
                 class: "login-modal-input",
@@ -211,11 +226,10 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
                 placeholder: "Password",
                 name: "password"
             }
-
-            if !error.read().is_empty() {
+            if !error_password.read().is_empty() {
                 div {
                     class: "login-modal-error",
-                    "{error}"
+                    "{error_password}"
                 }
             }
 
