@@ -106,25 +106,30 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
             },
             class: "login-modal-form",
 
-            input {
-                class: "login-modal-input",
-                r#type: "text",
-                placeholder: "Username",
-                name: "username"
-            }
-
-            input {
-                class: "login-modal-input",
-                r#type: "password",
-                placeholder: "Password",
-                name: "password"
-            }
-
-            if !error.read().is_empty() {
-                div {
-                    class: "login-modal-error",
-                    "{error}"
+            div {
+                class: "field-container",
+                input {
+                    class: "login-modal-input",
+                    r#type: "text",
+                    placeholder: "Username",
+                    name: "username"
                 }
+            }
+
+            div {
+                class: "field-container",
+                input {
+                    class: "login-modal-input",
+                    r#type: "password",
+                    placeholder: "Password",
+                    name: "password"
+                }
+
+            }
+
+            div {
+                class: "login-modal-error",
+                "{error}"
             }
 
             div {
@@ -149,6 +154,7 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
         }
     }
 }
+
 #[component]
 pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
     let mut error_username = use_signal(|| String::new());
