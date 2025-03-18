@@ -1,5 +1,6 @@
+use std::collections::HashMap;
 use crate::api::schemas;
-use crate::api::schemas::{AuthResponse, LoginRequest, RegisterRequest};
+use crate::api::schemas::{AuthResponse, LoginRequest, RegisterError, RegisterRequest};
 use crate::helpers::types::{ChatId, UserId};
 use crate::models::auth::Auth;
 use crate::{f, storage};
@@ -21,7 +22,7 @@ impl SharedClient {
         client.login(req).await
     }
 
-    pub async fn register(&self, req: RegisterRequest) -> Result<AuthResponse, String> {
+    pub async fn register(&self, req: RegisterRequest) -> Result<AuthResponse, RegisterError> {
         let mut client = self.0.write().await;
         client.register(req).await
     }
@@ -132,33 +133,38 @@ impl Client {
     pub async fn register(
         &mut self,
         register_req: RegisterRequest,
-    ) -> Result<AuthResponse, String> {
+    ) -> Result<AuthResponse, RegisterError> {
         let res = self
             .client
             .post(&self.user_url("users"))
             .json(&register_req)
             .send()
             .await
-            .map_err(|e| e.to_string())?;
-
+            .map_err(|e| RegisterError::ApiError(e.to_string()))?;
         let status = res.status();
-        let data: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
-
+        let data: serde_json::Value = res
+            .json()
+            .await
+            .map_err(|e| RegisterError::ApiError(e.to_string()))?;
         if !status.is_success() {
-            return Err(data["detail"]
-                .as_str()
-                .unwrap_or("Unknown error")
-                .to_string());
+            if let Some(errors) = data.get("errors") {
+                let errors_map: HashMap<String, String> = serde_json::from_value(errors.clone())
+                    .map_err(|e| RegisterError::ApiError(e.to_string()))?;
+                return Err(RegisterError::ValidationErrors(errors_map));
+            }
+            return Err(RegisterError::ApiError(
+                data["detail"]
+                    .as_str()
+                    .unwrap_or("Unknown error")
+                    .to_string(),
+            ));
         }
-
         let auth_response: AuthResponse =
-            serde_json::from_value(data).map_err(|e| e.to_string())?;
-
+            serde_json::from_value(data).map_err(|e| RegisterError::ApiError(e.to_string()))?;
         self.set_auth_tokens(Auth::new(
             &auth_response.access_token,
             &auth_response.refresh_token,
         ));
-
         Ok(auth_response)
     }
 

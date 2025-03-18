@@ -3,7 +3,7 @@ use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::hooks::use_signal;
 use dioxus::prelude::*;
-use lcore::api::schemas::{LoginRequest, RegisterRequest};
+use lcore::api::schemas::{LoginRequest, RegisterError, RegisterRequest};
 use lcore::third_party::utils::form_values_to_string;
 use lcore::utils;
 use validator::Validate;
@@ -198,7 +198,6 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
                     return;
                 }
 
-
                 let client = client.clone();
                 spawn(async move {
                     match client.register(req).await {
@@ -212,7 +211,19 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
                             show_modal.set(false);
                         }
                         Err(e) => {
-                            error_username.set(e);
+                            match e {
+                                RegisterError::ValidationErrors(map) => {
+                                    if let Some(username_err) = map.get("username") {
+                                        error_username.set(username_err.clone());
+                                    }
+                                    if let Some(password_err) = map.get("password") {
+                                        error_password.set(password_err.clone());
+                                    }
+                                }
+                                RegisterError::ApiError(msg) => {
+                                    error_username.set(msg);
+                                }
+                            }
                         }
                     }
                     processing.set(false);
@@ -246,7 +257,6 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
                     "{error_password}"
                 }
             }
-
             div {
                 class: "login-modal-buttons",
                 button {

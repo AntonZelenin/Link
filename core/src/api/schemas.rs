@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::helpers::types::{ChatId, UserId};
 use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationError};
@@ -114,4 +115,10 @@ pub struct AuthResponse {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AuthError {
     pub detail: String,
+}
+
+#[derive(Debug)]
+pub enum RegisterError {
+    ApiError(String),
+    ValidationErrors(HashMap<String, String>),
 }
