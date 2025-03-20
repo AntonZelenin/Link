@@ -1,13 +1,13 @@
-use crate::SharedClient;
+use crate::{storage, SharedClient};
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::hooks::use_signal;
 use dioxus::prelude::*;
-use lcore::api::schemas::{LoginRequest, RegisterError, RegisterRequest};
+use lcore::api::schemas::{AuthError, LoginRequest, RegisterError, RegisterRequest};
 use lcore::third_party::utils::form_values_to_string;
-use lcore::utils;
+use lcore::{auth, utils};
+use log::info;
 use validator::Validate;
-use web_sys::console;
 
 #[component]
 pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
@@ -56,6 +56,7 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
     let mut error = use_signal(|| String::new());
     let mut processing = use_signal(|| false);
     let client = use_context::<SharedClient>();
+    info!("Test log message");
 
     rsx! {
         form {
@@ -76,34 +77,27 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
 
                 // client is an Arc, so when we clone it, we're just cloning the reference
                 // cloning  is needed to move the client into the async block
-                let client = client.clone();
+                let mut client = client.clone();
 
                 spawn(async move {
-                    match client.login(req).await {
-                        Ok(auth_data) => {
-                            console::log_1(&"Login successful".into());
-
-                            if let Some(storage) = web_sys::window()
-                                .and_then(|w| w.local_storage().ok())
-                                .flatten()
-                            {
-                                storage.set_item("access_token", &auth_data.access_token).ok();
-                                storage.set_item("refresh_token", &auth_data.refresh_token).ok();
-                                storage.set_item("user_id", &auth_data.user_id).ok();
-                            }
-
+                    let storage = storage::get_storage();
+                    match auth::login(req, &mut client, &storage).await {
+                        Ok(()) => {
                             is_authenticated.set(true);
                             show_modal.set(false);
                         }
                         Err(e) => {
-                            console::log_1(&"Login failed".into());
-                            console::log_1(&e.clone().into());
-                            error.set(e);
+                            match e {
+                                AuthError::ApiError(msg) => {
+                                    error.set(msg);
+                                }
+                            };
                         }
                     }
                     processing.set(false);
                 });
             },
+
             class: "login-modal-form",
 
             div {

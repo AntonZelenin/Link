@@ -7,6 +7,8 @@ use web_sys::js_sys::eval;
 
 mod config;
 mod views;
+mod storage;
+mod logging;
 
 #[derive(Debug, Clone, Routable, PartialEq)]
 #[rustfmt::skip]
@@ -19,6 +21,7 @@ const MAIN_CSS: Asset = asset!("/assets/main.css");
 
 fn main() {
     config::init_config();
+    logging::init_logger();
 
     launch(App);
 }

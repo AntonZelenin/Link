@@ -112,9 +112,9 @@ pub struct AuthResponse {
     pub user_id: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AuthError {
-    pub detail: String,
+#[derive(Debug)]
+pub enum AuthError {
+    ApiError(String),
 }
 
 #[derive(Debug)]

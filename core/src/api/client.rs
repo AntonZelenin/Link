@@ -1,10 +1,10 @@
-use std::collections::HashMap;
 use crate::api::schemas;
-use crate::api::schemas::{AuthResponse, LoginRequest, RegisterError, RegisterRequest};
+use crate::api::schemas::{AuthError, AuthResponse, LoginRequest, RegisterError, RegisterRequest};
 use crate::helpers::types::{ChatId, UserId};
 use crate::models::auth::Auth;
 use crate::{f, storage};
 use reqwest::{Response, StatusCode};
+use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -17,7 +17,7 @@ use url::Url;
 pub struct SharedClient(Arc<RwLock<Client>>);
 
 impl SharedClient {
-    pub async fn login(&self, req: LoginRequest) -> Result<AuthResponse, String> {
+    pub async fn login(&self, req: LoginRequest) -> Result<AuthResponse, AuthError> {
         let mut client = self.0.write().await;
         client.login(req).await
     }
@@ -100,33 +100,33 @@ impl Client {
         self.auth_tokens.is_some()
     }
 
-    pub async fn login(&mut self, login_req: LoginRequest) -> Result<AuthResponse, String> {
+    pub async fn login(&mut self, login_req: LoginRequest) -> Result<AuthResponse, AuthError> {
         let res = self
             .client
             .post(&self.auth_url("login"))
             .json(&login_req)
             .send()
             .await
-            .map_err(|e| e.to_string())?;
-
+            .map_err(|e| AuthError::ApiError(e.to_string()))?;
         let status = res.status();
-        let data: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
-
+        let data: serde_json::Value = res
+            .json()
+            .await
+            .map_err(|e| AuthError::ApiError(e.to_string()))?;
         if !status.is_success() {
-            return Err(data["detail"]
-                .as_str()
-                .unwrap_or("Unknown error")
-                .to_string());
+            return Err(AuthError::ApiError(
+                data["detail"]
+                    .as_str()
+                    .unwrap_or("Unknown error")
+                    .to_string(),
+            ));
         }
-
         let auth_response: AuthResponse =
-            serde_json::from_value(data).map_err(|e| e.to_string())?;
-
+            serde_json::from_value(data).map_err(|e| AuthError::ApiError(e.to_string()))?;
         self.set_auth_tokens(Auth::new(
             &auth_response.access_token,
             &auth_response.refresh_token,
         ));
-
         Ok(auth_response)
     }
 
