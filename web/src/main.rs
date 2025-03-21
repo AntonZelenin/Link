@@ -1,11 +1,8 @@
-use crate::config::Config;
-use crate::storage::{get_storage, WebStorage};
+use crate::storage::get_storage;
 use dioxus::prelude::*;
 use lcore::api::client::{Client, SharedClient};
 use std::default::Default;
-use std::sync::Arc;
 use views::Home;
-use web_sys::console;
 use web_sys::js_sys::eval;
 use lcore::traits::SharedStorage;
 

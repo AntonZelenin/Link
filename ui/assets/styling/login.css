@@ -1,0 +1,119 @@
+.login-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.login-modal-content {
+    transform: translateY(-20%);
+    width: 100%;
+    max-width: 400px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.login-modal-header {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+}
+
+.login-modal-tabs {
+    display: flex;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+.login-modal-tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+.login-modal-tab.active {
+    border-bottom: 2px solid #88A9B3;
+    font-weight: bold;
+}
+
+.login-modal-tab:hover {
+    background-color: #f9f9f9;
+}
+
+.login-modal-form {
+    display: flex;
+    flex-direction: column;
+    /*gap: 15px;*/
+}
+
+.login-modal-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    background-color: #f9f9f930;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.login-modal-input:focus {
+    border-color: #88A9B3;
+}
+
+.login-modal-error {
+    color: #d9534f;
+    font-size: 12px;
+    text-align: center;
+}
+
+.login-modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    /*gap: 10px;*/
+}
+
+.login-modal-button {
+    padding: 10px 20px;
+    font-size: 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border: none;
+}
+
+.login-modal-button.cancel {
+    background-color: #f9f9f9;
+    color: #555;
+}
+
+.login-modal-button.cancel:hover {
+    background-color: #eee;
+}
+
+.login-modal-button.submit {
+    background-color: #88A9B3;
+    color: white;
+}
+
+.login-modal-button.submit:hover {
+    background-color: #7099A3;
+}
+
+.login-modal-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}

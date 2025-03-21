@@ -1,9 +1,25 @@
 use fern::Dispatch;
-use log::{info, LevelFilter};
+use log::LevelFilter;
 use std::io;
 use web_sys;
 
-pub struct WebConsole {
+pub fn init_logger() {
+    Dispatch::new()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "{} [{}] {}",
+                current_time(),
+                record.level(),
+                message
+            ))
+        })
+        .level(LevelFilter::Debug)
+        .chain(Box::new(WebConsole::new()) as Box<dyn io::Write + Send>)
+        .apply()
+        .unwrap();
+}
+
+struct WebConsole {
     buffer: String,
 }
 
@@ -31,22 +47,6 @@ impl io::Write for WebConsole {
         self.buffer.clear();
         Ok(())
     }
-}
-
-pub fn init_logger() {
-    Dispatch::new()
-        .format(|out, message, record| {
-            out.finish(format_args!(
-                "{} [{}] {}",
-                current_time(),
-                record.level(),
-                message
-            ))
-        })
-        .level(LevelFilter::Debug)
-        .chain(Box::new(WebConsole::new()) as Box<dyn io::Write + Send>)
-        .apply()
-        .unwrap();
 }
 
 fn current_time() -> String {

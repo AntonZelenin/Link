@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::hooks::use_signal;
@@ -10,11 +9,14 @@ use validator::Validate;
 use lcore::api::client::SharedClient;
 use lcore::traits::SharedStorage;
 
+const LOGIN_CSS: Asset = asset!("/assets/styling/login.css");
+
 #[component]
 pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
     let mut active_tab = use_signal(|| "login".to_string());
 
     rsx! {
+        document::Link { rel: "stylesheet", href: LOGIN_CSS }
         div {
             class: "login-modal",
             div {
