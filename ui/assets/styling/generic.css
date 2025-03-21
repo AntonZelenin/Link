@@ -1,0 +1,16 @@
+.sidebar {
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+.search-bar {
+    margin-bottom: 10px;
+}
+
+.short-border {
+    width: 90%;
+    margin: 0 auto;
+    height: 1px;
+    background-color: #ccc;
+}
