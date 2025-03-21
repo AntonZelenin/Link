@@ -1,4 +1,4 @@
-use crate::{storage, SharedClient};
+use std::sync::Arc;
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::hooks::use_signal;
@@ -6,8 +6,9 @@ use dioxus::prelude::*;
 use lcore::api::schemas::{AuthError, LoginRequest, RegisterError, RegisterRequest};
 use lcore::third_party::utils::form_values_to_string;
 use lcore::{auth, utils};
-use log::info;
 use validator::Validate;
+use lcore::api::client::SharedClient;
+use lcore::traits::SharedStorage;
 
 #[component]
 pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
@@ -56,7 +57,7 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
     let mut error = use_signal(|| String::new());
     let mut processing = use_signal(|| false);
     let client = use_context::<SharedClient>();
-    info!("Test log message");
+    let storage = use_context::<SharedStorage>();
 
     rsx! {
         form {
@@ -75,13 +76,10 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
                     }
                 };
 
-                // client is an Arc, so when we clone it, we're just cloning the reference
-                // cloning  is needed to move the client into the async block
-                let mut client = client.clone();
-
+                let client = client.clone();
+                let storage = storage.clone();
                 spawn(async move {
-                    let storage = storage::get_storage();
-                    match auth::login(req, &mut client, &storage).await {
+                    match auth::login(req, client, storage).await {
                         Ok(()) => {
                             is_authenticated.set(true);
                             show_modal.set(false);
@@ -155,6 +153,7 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
     let mut error_password = use_signal(|| String::new());
     let mut processing = use_signal(|| false);
     let client = use_context::<SharedClient>();
+    let storage = use_context::<SharedStorage>();
 
     rsx! {
         form {
@@ -193,14 +192,10 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
                 }
 
                 let client = client.clone();
+                let storage = storage.clone();
                 spawn(async move {
-                    match client.register(req).await {
-                        Ok(auth_data) => {
-                            if let Some(storage) = web_sys::window().and_then(|w| w.local_storage().ok()).flatten() {
-                                storage.set_item("access_token", &auth_data.access_token).ok();
-                                storage.set_item("refresh_token", &auth_data.refresh_token).ok();
-                                storage.set_item("user_id", &auth_data.user_id).ok();
-                            }
+                    match auth::register(req, client, storage).await {
+                        Ok(()) => {
                             is_authenticated.set(true);
                             show_modal.set(false);
                         }

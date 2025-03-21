@@ -5,14 +5,13 @@ edition = "2021"
 
 [dependencies]
 dioxus = { workspace = true, features = ["router"] }
-fern = "0.7.1"
-lcore = { package = "link-core", path = "../core" }
-log = "0.4.26"
-serde = { version = "1.0.217", features = ["derive"] }
-toml = "0.8.20"
+lcore = { workspace = true, package = "link-core" }
+log = { workspace = true }
+toml = { workspace = true }
 ui = { workspace = true }
-validator = { version = "0.20", features = ["derive"] }
+fern = "0.7.1"
 js-sys = "0.3.77"
+serde = { version = "1.0.218", features = ["derive"] }
 #wasm-bindgen = "0.2.100"
 
 [dependencies.web-sys]

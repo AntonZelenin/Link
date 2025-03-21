@@ -5,4 +5,6 @@ edition = "2021"
 
 [dependencies]
 dioxus = { workspace = true }
-
+lcore = { workspace = true, package = "link-core" }
+log = { workspace = true }
+validator = { version = "0.20", features = ["derive"] }

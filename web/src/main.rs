@@ -1,14 +1,18 @@
+use crate::config::Config;
+use crate::storage::{get_storage, WebStorage};
 use dioxus::prelude::*;
 use lcore::api::client::{Client, SharedClient};
 use std::default::Default;
+use std::sync::Arc;
 use views::Home;
 use web_sys::console;
 use web_sys::js_sys::eval;
+use lcore::traits::SharedStorage;
 
 mod config;
-mod views;
-mod storage;
 mod logging;
+mod storage;
+mod views;
 
 #[derive(Debug, Clone, Routable, PartialEq)]
 #[rustfmt::skip]
@@ -28,16 +32,7 @@ fn main() {
 
 #[component]
 fn App() -> Element {
-    let config = config::get_config();
-    let client = Client::new(
-        None,
-        config.core.auth_service_api_url.clone(),
-        config.core.user_service_api_url.clone(),
-        config.core.message_service_api_url.clone(),
-    );
-    let shared_client = SharedClient::new(client);
-
-    use_context_provider(|| shared_client);
+    init_context();
 
     eval("document.title = '< L ї n k >'").expect("Failed to set document title");
 
@@ -66,7 +61,7 @@ fn App() -> Element {
             {
                 if *show_login_modal.read() {
                     rsx! {
-                        views::LoginModal {
+                        ui::login::LoginModal {
                             is_authenticated: is_authenticated,
                             show_modal: show_login_modal,
                         }
@@ -244,4 +239,19 @@ fn ShortBorder() -> Element {
     rsx! {
         div { class: "short-border" }
     }
+}
+
+fn init_context() {
+    let config = config::get_config();
+    let client = Client::new(
+        None,
+        config.core.auth_service_api_url.clone(),
+        config.core.user_service_api_url.clone(),
+        config.core.message_service_api_url.clone(),
+    );
+    let shared_client = SharedClient::new(client);
+    use_context_provider(|| shared_client);
+
+    let storage = SharedStorage::new(get_storage());
+    use_context_provider(|| storage);
 }
