@@ -3,7 +3,7 @@ use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::prelude::*;
 
-const CSS: Asset = asset!("/assets/styling/main.css");
+const CSS: Asset = asset!("/assets/styling/home.css");
 
 #[component]
 pub fn MainView(selected_chat: Signal<Option<(String, Vec<(String, String)>)>>) -> Element {
