@@ -6,7 +6,6 @@ use lcore::api::client::SharedApiClient;
 use lcore::api::schemas::{AuthError, LoginRequest, RegisterError, RegisterRequest};
 use lcore::prelude::*;
 use lcore::third_party::utils::form_values_to_string;
-use lcore::traits::SharedStorage;
 use lcore::{auth, utils};
 use validator::Validate;
 

@@ -22,3 +22,9 @@ pub struct CoreConfig {
 pub struct Apps {
     enabled: Vec<String>,
 }
+
+impl Apps {
+    pub fn is_app_enabled(&self, app_name: &str) -> bool {
+        self.enabled.iter().any(|name| name == app_name)
+    }
+}

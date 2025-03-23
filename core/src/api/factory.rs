@@ -1,5 +1,5 @@
 use crate::api::client::{ApiClient, SharedApiClient};
-use crate::traits::SharedStorage;
+use crate::storage::SharedStorage;
 use crate::{auth, config};
 
 pub fn get_shared_api_client(storage: SharedStorage) -> SharedApiClient {

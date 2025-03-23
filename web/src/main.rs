@@ -1,8 +1,8 @@
 use crate::storage::get_storage;
 use dioxus::prelude::*;
 use js_sys::eval;
-use lcore::prelude::IS_AUTHENTICATED;
-use lcore::traits::SharedStorage;
+use lcore::prelude::*;
+use ui::messenger;
 
 mod config;
 mod logging;
@@ -39,4 +39,17 @@ fn init() {
 
     let shared_client = lcore::api::factory::get_shared_api_client(storage.clone());
     use_context_provider(|| shared_client);
+
+    register_apps_from_config(storage.clone());
+}
+
+pub fn register_apps_from_config(storage: SharedStorage) {
+    let config = config::get_config();
+
+    // for now, they are hardcoded, I'll move to dlls later
+    if config.core.apps.is_app_enabled(messenger::NAME) {
+        register_app(messenger::NAME, messenger::Messenger);
+    }
+
+    load_active_app(storage);
 }

@@ -1,7 +1,8 @@
+use crate::apps::AppsView;
 use crate::login;
 use dioxus::prelude::*;
 use lcore::prelude::*;
-use crate::apps::AppsView;
+use lcore::state::AppComponent;
 
 const CSS: Asset = asset!("/assets/styling/home.css");
 const GENERIC_CSS: Asset = asset!("/assets/styling/generic.css");
@@ -32,15 +33,18 @@ pub fn App() -> Element {
 
 #[component]
 fn AppView() -> Element {
-    if let Some(app) = ACTIVE_APP.read().as_ref() {
-        return (app)();
+    if let Some(app) = get_active_app() {
+        let App = app;
+        return rsx! {
+            App {}
+        };
     }
 
     rsx! { Empty {} }
 }
 
 #[component]
-pub fn Empty() -> Element {
+fn Empty() -> Element {
     rsx! {
         div {
             class: "empty-app-container",

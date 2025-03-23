@@ -3,20 +3,19 @@ use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::hooks::use_signal;
 use dioxus::prelude::*;
-use lcore::state::ACTIVE_APP;
+use lcore::prelude::*;
 
 const CSS: Asset = asset!("/assets/styling/messenger/main.css");
+pub const NAME: &str = "messenger";
 
 #[component]
 pub fn MessengerApp() -> Element {
+    let storage = use_context::<SharedStorage>();
+
     rsx! {
         div {
             class: "app-icon",
-            onclick: move |_| {
-                *ACTIVE_APP.write() = Some(Box::new(|| rsx! {
-                    Messenger {}
-                }));
-            },
+            onclick: move |_| set_active_app(NAME, storage.clone()),
             "💬"
         }
     }

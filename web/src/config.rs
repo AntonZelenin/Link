@@ -14,7 +14,7 @@ pub struct Config {
     pub web: WebConfig,
 }
 
-pub fn load_web_config() -> Result<Config, Box<dyn std::error::Error>> {
+fn load_web_config() -> Result<Config, Box<dyn std::error::Error>> {
     let core_config = lcore::config::load_core_config()?;
     let web_config: WebConfig = toml::from_str(WEB_CONFIG_TOML)?;
 

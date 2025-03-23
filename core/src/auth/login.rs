@@ -1,6 +1,6 @@
 use crate::api::client::SharedApiClient;
 use crate::api::schemas::{AuthError, LoginRequest, RegisterError, RegisterRequest};
-use crate::traits::SharedStorage;
+use crate::storage::SharedStorage;
 
 pub async fn login(
     login_request: LoginRequest,
