@@ -10,18 +10,23 @@ impl SharedStorage {
         Self(Arc::new(RwLock::new(storage)))
     }
 
-    pub fn set_item(&self, key: &str, value: &str) {
-        self.0.write().unwrap().set_item(key, value);
+    pub fn set(&self, key: &str, value: &str) {
+        self.0.write().unwrap().set(key, value);
     }
 
-    pub fn get_item(&self, key: &str) -> Option<String> {
-        self.0.read().unwrap().get_item(key)
+    pub fn get(&self, key: &str) -> Option<String> {
+        self.0.read().unwrap().get(key)
+    }
+
+    pub fn remove(&self, key: &str) {
+        self.0.write().unwrap().remove(key);
     }
 }
 
 pub trait Storage {
-    fn set_item(&self, key: &str, value: &str);
-    fn get_item(&self, key: &str) -> Option<String>;
+    fn set(&self, key: &str, value: &str);
+    fn get(&self, key: &str) -> Option<String>;
+    fn remove(&self, key: &str);
 }
 
 pub trait ToJson {

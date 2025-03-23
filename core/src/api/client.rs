@@ -1,15 +1,17 @@
 use crate::api::schemas;
-use crate::api::schemas::{AuthError, AuthResponse, LoginRequest, RegisterError, RegisterRequest};
+use crate::api::schemas::{
+    AuthError, AuthResponse, LoginRequest, RegisterError, RegisterRequest, RequestParams,
+};
+use crate::auth::schemas::Auth;
+use crate::f;
 use crate::helpers::types::{ChatId, UserId};
-use crate::models::auth::Auth;
-use crate::{f, storage};
+use crate::storage::AuthManager;
 use reqwest::{Response, StatusCode};
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use url::Url;
-
 // type WriteMessageWs = SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>;
 // type ReadMessageWs = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 
@@ -32,35 +34,10 @@ impl SharedClient {
     }
 }
 
-struct RequestParams {
-    uri: String,
-    query_params: Vec<(String, String)>,
-    body: Option<serde_json::Value>,
-    can_reauthenticate: bool,
-}
-
-impl RequestParams {
-    pub fn set_cant_reauthenticate(&mut self) {
-        self.can_reauthenticate = false;
-    }
-}
-
-impl Default for RequestParams {
-    fn default() -> Self {
-        Self {
-            uri: "".to_string(),
-            query_params: vec![],
-            body: None,
-            can_reauthenticate: true,
-        }
-    }
-}
-
 pub struct Client {
     client: reqwest::Client,
-    auth_tokens: Option<Auth>,
-    store_auth_tokens_callback: Box<dyn Fn(&Auth)>,
-    delete_auth_tokens_callback: Box<dyn Fn()>,
+    auth: Option<Auth>,
+    auth_manager: AuthManager,
 
     auth_service_api_url: String,
     user_service_api_url: String,
@@ -71,16 +48,17 @@ pub struct Client {
 
 impl Client {
     pub fn new(
-        auth_tokens: Option<Auth>,
+        client: reqwest::Client,
+        auth: Option<Auth>,
         auth_service_api_url: String,
         user_service_api_url: String,
         message_service_api_url: String,
+        auth_manager: AuthManager,
     ) -> Self {
         let obj = Self {
-            client: reqwest::Client::new(),
-            auth_tokens,
-            store_auth_tokens_callback: Box::new(storage::store_auth_tokens),
-            delete_auth_tokens_callback: Box::new(storage::delete_auth_tokens),
+            client,
+            auth,
+            auth_manager,
 
             auth_service_api_url,
             user_service_api_url,
@@ -97,7 +75,7 @@ impl Client {
     }
 
     pub fn is_authenticated(&self) -> bool {
-        self.auth_tokens.is_some()
+        self.auth.is_some()
     }
 
     pub async fn login(&mut self, login_req: LoginRequest) -> Result<AuthResponse, AuthError> {
@@ -338,7 +316,7 @@ impl Client {
                 match self.refresh_tokens(&mut rp).await {
                     Ok(_) => continue,
                     Err(e) => {
-                        self.unauthenticate();
+                        self.log_out();
                         return Err(e);
                     }
                 }
@@ -356,9 +334,7 @@ impl Client {
     }
 
     fn should_refresh_tokens(&mut self, rp: &mut RequestParams, res: &Response) -> bool {
-        res.status() == StatusCode::UNAUTHORIZED
-            && rp.can_reauthenticate
-            && self.auth_tokens.is_some()
+        res.status() == StatusCode::UNAUTHORIZED && rp.can_reauthenticate && self.auth.is_some()
     }
 
     async fn get(&mut self, mut rp: RequestParams) -> ApiResult<Response> {
@@ -376,7 +352,7 @@ impl Client {
                 match self.refresh_tokens(&mut rp).await {
                     Ok(_) => continue,
                     Err(_) => {
-                        self.unauthenticate();
+                        self.log_out();
                         return Err(ApiError::Unauthenticated);
                     }
                 }
@@ -401,7 +377,7 @@ impl Client {
 
         let refresh_token_data = schemas::RefreshTokenRequest {
             refresh_token: self
-                .auth_tokens
+                .auth
                 .as_ref()
                 .expect("Unauthenticated")
                 .refresh_token
@@ -489,22 +465,19 @@ impl Client {
     // }
 
     fn set_auth_tokens(&mut self, tokens: Auth) {
-        self.auth_tokens = Some(tokens.clone());
-        (self.store_auth_tokens_callback)(&tokens);
+        self.auth = Some(tokens.clone());
+        self.auth_manager.update(tokens);
     }
 
-    fn unauthenticate(&mut self) {
-        self.auth_tokens = None;
-        (self.delete_auth_tokens_callback)();
+    fn log_out(&mut self) {
+        self.auth = None;
+        self.auth_manager.delete();
     }
 
     fn get_authorization_header(&mut self) -> String {
         format!(
             "Bearer {}",
-            self.auth_tokens
-                .as_ref()
-                .expect("Unauthenticated")
-                .access_token
+            self.auth.as_ref().expect("Unauthenticated").access_token
         )
     }
 

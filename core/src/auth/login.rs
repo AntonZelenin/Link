@@ -9,9 +9,9 @@ pub async fn login(
 ) -> Result<(), AuthError> {
     let auth_response = client.login(login_request).await?;
 
-    storage.set_item("access_token", &auth_response.access_token);
-    storage.set_item("refresh_token", &auth_response.refresh_token);
-    storage.set_item("user_id", &auth_response.user_id);
+    storage.set("access_token", &auth_response.access_token);
+    storage.set("refresh_token", &auth_response.refresh_token);
+    storage.set("user_id", &auth_response.user_id);
 
     Ok(())
 }
@@ -23,9 +23,9 @@ pub async fn register(
 ) -> Result<(), RegisterError> {
     let auth_response = client.register(register_request).await?;
 
-    storage.set_item("access_token", &auth_response.access_token);
-    storage.set_item("refresh_token", &auth_response.refresh_token);
-    storage.set_item("user_id", &auth_response.user_id);
+    storage.set("access_token", &auth_response.access_token);
+    storage.set("refresh_token", &auth_response.refresh_token);
+    storage.set("user_id", &auth_response.user_id);
 
     Ok(())
 }

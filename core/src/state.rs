@@ -1,4 +1,4 @@
 use dioxus::prelude::{Global, GlobalSignal};
-use crate::models::auth::Auth;
+use crate::auth::schemas::Auth;
 
 pub static AUTH: GlobalSignal<Option<Auth>> = Global::new(|| None);

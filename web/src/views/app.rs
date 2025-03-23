@@ -56,16 +56,10 @@ pub fn App() -> Element {
 }
 
 fn init_context() {
-    let config = config::get_config();
-    let client = Client::new(
-        None,
-        config.core.auth_service_api_url.clone(),
-        config.core.user_service_api_url.clone(),
-        config.core.message_service_api_url.clone(),
-    );
+    let storage = SharedStorage::new(get_storage());
+    use_context_provider(|| storage.clone());
+
+    let client = lcore::api::factory::get_api_client(storage.clone());
     let shared_client = SharedClient::new(client);
     use_context_provider(|| shared_client);
-
-    let storage = SharedStorage::new(get_storage());
-    use_context_provider(|| storage);
 }

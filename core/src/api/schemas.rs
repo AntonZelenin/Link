@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use crate::helpers::types::{ChatId, UserId};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use validator::{Validate, ValidationError};
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -121,4 +121,28 @@ pub enum AuthError {
 pub enum RegisterError {
     ApiError(String),
     ValidationErrors(HashMap<String, String>),
+}
+
+pub struct RequestParams {
+    pub uri: String,
+    pub query_params: Vec<(String, String)>,
+    pub body: Option<serde_json::Value>,
+    pub can_reauthenticate: bool,
+}
+
+impl RequestParams {
+    pub fn set_cant_reauthenticate(&mut self) {
+        self.can_reauthenticate = false;
+    }
+}
+
+impl Default for RequestParams {
+    fn default() -> Self {
+        Self {
+            uri: "".to_string(),
+            query_params: vec![],
+            body: None,
+            can_reauthenticate: true,
+        }
+    }
 }
