@@ -5,7 +5,7 @@ use dioxus::dioxus_core::Element;
 use dioxus::hooks::{use_context_provider, use_signal};
 use dioxus::prelude::*;
 use js_sys::eval;
-use lcore::api::client::{Client, SharedClient};
+use lcore::api::client::{ApiClient, SharedApiClient};
 use lcore::traits::SharedStorage;
 use ui::generic::Sidebar;
 use ui::home::MainView;
@@ -59,7 +59,6 @@ fn init_context() {
     let storage = SharedStorage::new(get_storage());
     use_context_provider(|| storage.clone());
 
-    let client = lcore::api::factory::get_api_client(storage.clone());
-    let shared_client = SharedClient::new(client);
+    let shared_client = lcore::api::factory::get_shared_api_client(storage.clone());
     use_context_provider(|| shared_client);
 }

@@ -16,9 +16,9 @@ use url::Url;
 // type ReadMessageWs = SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>;
 
 #[derive(Clone)]
-pub struct SharedClient(Arc<RwLock<Client>>);
+pub struct SharedApiClient(Arc<RwLock<ApiClient>>);
 
-impl SharedClient {
+impl SharedApiClient {
     pub async fn login(&self, req: LoginRequest) -> Result<AuthResponse, AuthError> {
         let mut client = self.0.write().await;
         client.login(req).await
@@ -29,12 +29,12 @@ impl SharedClient {
         client.register(req).await
     }
 
-    pub fn new(client: Client) -> Self {
+    pub fn new(client: ApiClient) -> Self {
         Self(Arc::new(RwLock::new(client)))
     }
 }
 
-pub struct Client {
+pub struct ApiClient {
     client: reqwest::Client,
     auth: Option<Auth>,
     auth_manager: AuthManager,
@@ -46,7 +46,7 @@ pub struct Client {
     // read_message_ws: Option<ReadMessageWs>,
 }
 
-impl Client {
+impl ApiClient {
     pub fn new(
         client: reqwest::Client,
         auth: Option<Auth>,

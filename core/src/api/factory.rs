@@ -1,12 +1,16 @@
-use crate::api::client::Client;
+use crate::api::client::{ApiClient, SharedApiClient};
 use crate::config;
 use crate::storage::AuthManager;
 use crate::traits::SharedStorage;
 
-pub fn get_api_client(storage: SharedStorage) -> Client {
+pub fn get_shared_api_client(storage: SharedStorage) -> SharedApiClient {
+    SharedApiClient::new(get_api_client(storage))
+}
+
+pub fn get_api_client(storage: SharedStorage) -> ApiClient {
     let config = config::load_core_config().expect("Failed to load core config");
 
-    Client::new(
+    ApiClient::new(
         reqwest::Client::new(),
         None,
         config.auth_service_api_url.clone(),

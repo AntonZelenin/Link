@@ -1,10 +1,10 @@
-use crate::api::client::SharedClient;
+use crate::api::client::SharedApiClient;
 use crate::api::schemas::{AuthError, LoginRequest, RegisterError, RegisterRequest};
 use crate::traits::SharedStorage;
 
 pub async fn login(
     login_request: LoginRequest,
-    client: SharedClient,
+    client: SharedApiClient,
     storage: SharedStorage,
 ) -> Result<(), AuthError> {
     let auth_response = client.login(login_request).await?;
@@ -18,7 +18,7 @@ pub async fn login(
 
 pub async fn register(
     register_request: RegisterRequest,
-    client: SharedClient,
+    client: SharedApiClient,
     storage: SharedStorage,
 ) -> Result<(), RegisterError> {
     let auth_response = client.register(register_request).await?;

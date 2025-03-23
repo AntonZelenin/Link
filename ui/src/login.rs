@@ -6,7 +6,7 @@ use lcore::api::schemas::{AuthError, LoginRequest, RegisterError, RegisterReques
 use lcore::third_party::utils::form_values_to_string;
 use lcore::{auth, utils};
 use validator::Validate;
-use lcore::api::client::SharedClient;
+use lcore::api::client::SharedApiClient;
 use lcore::traits::SharedStorage;
 
 const LOGIN_CSS: Asset = asset!("/assets/styling/login.css");
@@ -58,7 +58,7 @@ pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> E
 pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
     let mut error = use_signal(|| String::new());
     let mut processing = use_signal(|| false);
-    let client = use_context::<SharedClient>();
+    let client = use_context::<SharedApiClient>();
     let storage = use_context::<SharedStorage>();
 
     rsx! {
@@ -154,7 +154,7 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
     let mut error_username = use_signal(|| String::new());
     let mut error_password = use_signal(|| String::new());
     let mut processing = use_signal(|| false);
-    let client = use_context::<SharedClient>();
+    let client = use_context::<SharedApiClient>();
     let storage = use_context::<SharedStorage>();
 
     rsx! {
