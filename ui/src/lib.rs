@@ -1,3 +1,4 @@
+pub mod apps;
 pub mod generic;
 pub mod home;
 pub mod login;

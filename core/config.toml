@@ -2,3 +2,6 @@ auth_service_api_url = "http://localhost:55800/api/auth/v1/"
 user_service_api_url = "http://localhost:55800/api/user/v1/"
 message_service_api_url = "http://localhost:55800/api/message/v1/"
 message_websocket_url = "ws://localhost:55800/ws/message/v1/messages/"
+
+[apps]
+enabled = ["messenger"]

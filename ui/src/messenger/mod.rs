@@ -1,4 +1,3 @@
-mod main;
-mod messenger;
+mod app;
 
-pub use main::*;
+pub use app::*;

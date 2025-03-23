@@ -3,9 +3,39 @@ use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::hooks::use_signal;
 use dioxus::prelude::*;
+use lcore::state::ACTIVE_APP;
 
-const CSS: Asset = asset!("/assets/styling/messenger/messenger.css");
-const GENERIC_CSS: Asset = asset!("/assets/styling/generic.css");
+const CSS: Asset = asset!("/assets/styling/messenger/main.css");
+
+#[component]
+pub fn MessengerApp() -> Element {
+    rsx! {
+        div {
+            class: "app-icon",
+            onclick: move |_| {
+                *ACTIVE_APP.write() = Some(Box::new(|| rsx! {
+                    Messenger {}
+                }));
+            },
+            "💬"
+        }
+    }
+}
+
+#[component]
+pub fn Messenger() -> Element {
+    let selected_chat = use_signal(|| None::<(String, Vec<(String, String)>)>);
+
+    rsx! {
+        document::Link { rel: "stylesheet", href: CSS }
+
+        div {
+            class: "messenger-container",
+            Sidebar { selected_chat: selected_chat }
+            MessengerConversationArea { selected_chat: selected_chat }
+        }
+    }
+}
 
 #[component]
 pub fn MessengerConversationArea(
@@ -13,7 +43,6 @@ pub fn MessengerConversationArea(
 ) -> Element {
     rsx! {
         document::Link { rel: "stylesheet", href: CSS }
-        document::Link { rel: "stylesheet", href: GENERIC_CSS }
 
         div {
             class: "conversation-area",

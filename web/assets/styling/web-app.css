@@ -17,9 +17,3 @@ body {
     padding: 10px;
     background: linear-gradient(to bottom, #D9DBDC, #C6D8DF);
 }
-
-.app-container {
-    display: flex;
-    height: calc(100vh - 20px);
-    overflow: hidden;
-}

@@ -10,14 +10,14 @@ use lcore::traits::SharedStorage;
 use lcore::{auth, utils};
 use validator::Validate;
 
-const LOGIN_CSS: Asset = asset!("/assets/styling/login.css");
+const CSS: Asset = asset!("/assets/styling/login.css");
 
 #[component]
 pub fn Login() -> Element {
     let mut active_tab = use_signal(|| "login".to_string());
 
     rsx! {
-        document::Link { rel: "stylesheet", href: LOGIN_CSS }
+        document::Link { rel: "stylesheet", href: CSS }
         div {
             class: "login-modal",
             div {
