@@ -2,17 +2,18 @@ use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::hooks::use_signal;
 use dioxus::prelude::*;
+use lcore::api::client::SharedApiClient;
 use lcore::api::schemas::{AuthError, LoginRequest, RegisterError, RegisterRequest};
+use lcore::prelude::*;
 use lcore::third_party::utils::form_values_to_string;
+use lcore::traits::SharedStorage;
 use lcore::{auth, utils};
 use validator::Validate;
-use lcore::api::client::SharedApiClient;
-use lcore::traits::SharedStorage;
 
 const LOGIN_CSS: Asset = asset!("/assets/styling/login.css");
 
 #[component]
-pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
+pub fn LoginModal() -> Element {
     let mut active_tab = use_signal(|| "login".to_string());
 
     rsx! {
@@ -44,10 +45,10 @@ pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> E
                 }
 
                 if *active_tab.read() == "login" {
-                    LoginForm { is_authenticated, show_modal }
+                    LoginForm { }
                 }
                 if *active_tab.read() == "register" {
-                    RegisterForm { is_authenticated, show_modal }
+                    RegisterForm { }
                 }
             }
         }
@@ -55,7 +56,7 @@ pub fn LoginModal(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> E
 }
 
 #[component]
-pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
+pub fn LoginForm() -> Element {
     let mut error = use_signal(|| String::new());
     let mut processing = use_signal(|| false);
     let client = use_context::<SharedApiClient>();
@@ -83,8 +84,7 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
                 spawn(async move {
                     match auth::login(req, client, storage).await {
                         Ok(()) => {
-                            is_authenticated.set(true);
-                            show_modal.set(false);
+                            *IS_AUTHENTICATED.write() = true;
                         }
                         Err(e) => {
                             match e {
@@ -129,12 +129,6 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
             div {
                 class: "login-modal-buttons",
                 button {
-                    r#type: "button",
-                    class: "login-modal-button cancel",
-                    onclick: move |_| show_modal.set(false),
-                    "Cancel"
-                }
-                button {
                     r#type: "submit",
                     class: "login-modal-button submit",
                     disabled: *processing.read(),
@@ -150,7 +144,7 @@ pub fn LoginForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> El
 }
 
 #[component]
-pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) -> Element {
+pub fn RegisterForm() -> Element {
     let mut error_username = use_signal(|| String::new());
     let mut error_password = use_signal(|| String::new());
     let mut processing = use_signal(|| false);
@@ -198,8 +192,7 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
                 spawn(async move {
                     match auth::register(req, client, storage).await {
                         Ok(()) => {
-                            is_authenticated.set(true);
-                            show_modal.set(false);
+                            *IS_AUTHENTICATED.write() = true;
                         }
                         Err(e) => {
                             match e {
@@ -250,12 +243,6 @@ pub fn RegisterForm(is_authenticated: Signal<bool>, show_modal: Signal<bool>) ->
             }
             div {
                 class: "login-modal-buttons",
-                button {
-                    "type": "button",
-                    class: "login-modal-button cancel",
-                    onclick: move |_| show_modal.set(false),
-                    "Cancel"
-                }
                 button {
                     "type": "submit",
                     class: "login-modal-button submit",

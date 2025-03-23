@@ -1,11 +1,10 @@
-use crate::config;
 use crate::storage::get_storage;
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::hooks::{use_context_provider, use_signal};
 use dioxus::prelude::*;
 use js_sys::eval;
-use lcore::api::client::{ApiClient, SharedApiClient};
+use lcore::prelude::*;
 use lcore::traits::SharedStorage;
 use ui::generic::Sidebar;
 use ui::home::MainView;
@@ -18,8 +17,6 @@ pub fn App() -> Element {
 
     eval("document.title = '< L ї n k >'").expect("Failed to set document title");
 
-    let is_authenticated = use_signal(|| false);
-    let show_login_modal = use_signal(|| true);
     let selected_chat = use_signal(|| None::<(String, Vec<(String, String)>)>);
 
     rsx! {
@@ -29,7 +26,7 @@ pub fn App() -> Element {
             class: "container",
             // Only show main UI if authenticated
             {
-                if *is_authenticated.read() {
+                if *IS_AUTHENTICATED.read() {
                     rsx! {
                         Sidebar { selected_chat: selected_chat }
                         MainView { selected_chat: selected_chat }
@@ -40,12 +37,9 @@ pub fn App() -> Element {
             }
 
             {
-                if *show_login_modal.read() {
+                if !*IS_AUTHENTICATED.read() {
                     rsx! {
-                        ui::login::LoginModal {
-                            is_authenticated: is_authenticated,
-                            show_modal: show_login_modal,
-                        }
+                        ui::login::LoginModal {}
                     }
                 } else {
                     rsx! {}
