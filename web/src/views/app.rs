@@ -1,13 +1,10 @@
 use crate::storage::get_storage;
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
-use dioxus::hooks::{use_context_provider, use_signal};
 use dioxus::prelude::*;
 use js_sys::eval;
 use lcore::prelude::*;
 use lcore::traits::SharedStorage;
-use ui::generic::Sidebar;
-use ui::home::MainView;
 
 const CSS: Asset = asset!("/assets/styling/main.css");
 
@@ -17,32 +14,20 @@ pub fn App() -> Element {
 
     eval("document.title = '< L ї n k >'").expect("Failed to set document title");
 
-    let selected_chat = use_signal(|| None::<(String, Vec<(String, String)>)>);
-
     rsx! {
         document::Link { rel: "stylesheet", href: CSS }
 
         div {
-            class: "container",
-            // Only show main UI if authenticated
+            class: "app-container",
             {
                 if *IS_AUTHENTICATED.read() {
                     rsx! {
-                        Sidebar { selected_chat: selected_chat }
-                        MainView { selected_chat: selected_chat }
+                        ui::messenger::Messenger {}
                     }
                 } else {
-                    rsx! {}
-                }
-            }
-
-            {
-                if !*IS_AUTHENTICATED.read() {
                     rsx! {
-                        ui::login::LoginModal {}
+                        ui::login::Login {}
                     }
-                } else {
-                    rsx! {}
                 }
             }
         }

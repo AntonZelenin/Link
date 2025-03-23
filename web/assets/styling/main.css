@@ -18,7 +18,7 @@ body {
     background: linear-gradient(to bottom, #D9DBDC, #C6D8DF);
 }
 
-.container {
+.app-container {
     display: flex;
     height: calc(100vh - 20px);
     overflow: hidden;

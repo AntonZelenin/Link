@@ -119,3 +119,34 @@
 .message-send-button:hover {
     background-color: #88A9B370;
 }
+
+.sidebar {
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+.search-bar {
+    margin-bottom: 10px;
+}
+
+.search-bar input {
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    background-color: #ffffff70;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.search-bar input:focus {
+    outline: none;
+}
+
+.conversation-area {
+    flex: 1;
+    border-radius: 10px;
+    margin-left: 10px;
+    background-color: #f8f8f830;
+}

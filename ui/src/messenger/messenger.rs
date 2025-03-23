@@ -1,10 +1,66 @@
+use crate::generic::ShortBorder;
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::hooks::use_signal;
 use dioxus::prelude::*;
-use crate::generic::ShortBorder;
 
 const CSS: Asset = asset!("/assets/styling/messenger/messenger.css");
+const GENERIC_CSS: Asset = asset!("/assets/styling/generic.css");
+
+#[component]
+pub fn MessengerConversationArea(
+    selected_chat: Signal<Option<(String, Vec<(String, String)>)>>,
+) -> Element {
+    rsx! {
+        document::Link { rel: "stylesheet", href: CSS }
+        document::Link { rel: "stylesheet", href: GENERIC_CSS }
+
+        div {
+            class: "conversation-area",
+            {
+                match &*selected_chat.read() {
+                    Some((title, messages)) => rsx! {
+                        Chat {
+                            title: title.clone(),
+                            messages: messages.clone(),
+                            on_send: move |msg: String| {
+                                println!("Sending message: {}", msg);
+                            }
+                        }
+                    },
+                    None => rsx! {
+                        div {
+                            class: "no-chat-selected",
+                            "Select a chat to start messaging!"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[component]
+pub fn Sidebar(selected_chat: Signal<Option<(String, Vec<(String, String)>)>>) -> Element {
+    rsx! {
+        div { class: "sidebar",
+            SearchBar {}
+            ChatList { selected_chat: selected_chat }
+        }
+    }
+}
+
+#[component]
+pub fn SearchBar() -> Element {
+    rsx! {
+        div { class: "search-bar",
+            input {
+                "type": "text",
+                placeholder: "Search"
+            }
+        }
+    }
+}
 
 #[component]
 pub fn ChatList(selected_chat: Signal<Option<(String, Vec<(String, String)>)>>) -> Element {

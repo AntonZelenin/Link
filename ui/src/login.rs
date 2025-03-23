@@ -13,7 +13,7 @@ use validator::Validate;
 const LOGIN_CSS: Asset = asset!("/assets/styling/login.css");
 
 #[component]
-pub fn LoginModal() -> Element {
+pub fn Login() -> Element {
     let mut active_tab = use_signal(|| "login".to_string());
 
     rsx! {
