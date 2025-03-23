@@ -10,7 +10,11 @@ impl AuthManager {
         AuthManager { storage }
     }
 
-    pub fn get(&self) -> Option<Auth> {
+    pub fn is_authenticated(&self) -> bool {
+        self.get_auth().is_some()
+    }
+
+    pub fn get_auth(&self) -> Option<Auth> {
         let refresh_token = self.storage.get("refresh_token");
         let access_token = self.storage.get("access_token");
 
@@ -21,12 +25,12 @@ impl AuthManager {
         Some(Auth::new(&access_token.unwrap(), &refresh_token.unwrap()))
     }
 
-    pub fn update(&mut self, auth: Auth) {
+    pub fn update_auth(&mut self, auth: Auth) {
         self.storage.set("refresh_token", &auth.refresh_token);
         self.storage.set("access_token", &auth.access_token);
     }
 
-    pub fn delete(&mut self) {
+    pub fn delete_auth(&mut self) {
         self.storage.remove("refresh_token");
         self.storage.remove("access_token");
     }

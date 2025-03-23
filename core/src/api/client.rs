@@ -49,7 +49,6 @@ pub struct ApiClient {
 impl ApiClient {
     pub fn new(
         client: reqwest::Client,
-        auth: Option<Auth>,
         auth_service_api_url: String,
         user_service_api_url: String,
         message_service_api_url: String,
@@ -57,7 +56,7 @@ impl ApiClient {
     ) -> Self {
         let obj = Self {
             client,
-            auth,
+            auth: auth_manager.get_auth(),
             auth_manager,
 
             auth_service_api_url,
@@ -466,12 +465,12 @@ impl ApiClient {
 
     fn set_auth_tokens(&mut self, tokens: Auth) {
         self.auth = Some(tokens.clone());
-        self.auth_manager.update(tokens);
+        self.auth_manager.update_auth(tokens);
     }
 
     fn log_out(&mut self) {
         self.auth = None;
-        self.auth_manager.delete();
+        self.auth_manager.delete_auth();
     }
 
     fn get_authorization_header(&mut self) -> String {
