@@ -151,9 +151,18 @@ impl ApiClient {
     }
     
     pub async fn logout(&mut self) -> Result<(), AuthError> {
+         let refresh_token_data = schemas::RefreshTokenRequest {
+            refresh_token: self
+                .auth
+                .as_ref()
+                .expect("Unauthenticated")
+                .refresh_token
+                .clone(),
+        };
         let res = self
             .client
             .post(&self.auth_url("logout"))
+            .json(&refresh_token_data)
             .header("Authorization", self.get_authorization_header())
             .send()
             .await
