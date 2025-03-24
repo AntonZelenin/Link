@@ -28,6 +28,11 @@ impl SharedApiClient {
         let mut client = self.0.write().await;
         client.register(req).await
     }
+    
+    pub async fn logout(&self) -> Result<(), AuthError> {
+        let mut client = self.0.write().await;
+        client.logout().await
+    }
 
     pub fn new(client: ApiClient) -> Self {
         Self(Arc::new(RwLock::new(client)))
@@ -143,6 +148,22 @@ impl ApiClient {
             &auth_response.refresh_token,
         ));
         Ok(auth_response)
+    }
+    
+    pub async fn logout(&mut self) -> Result<(), AuthError> {
+        let res = self
+            .client
+            .post(&self.auth_url("logout"))
+            .header("Authorization", self.get_authorization_header())
+            .send()
+            .await
+            .map_err(|e| AuthError::ApiError(e.to_string()))?;
+        let status = res.status();
+        if !status.is_success() {
+            return Err(AuthError::ApiError("Failed to log out".to_string()));
+        }
+        self.log_out();
+        Ok(())
     }
 
     pub async fn get_users_by_ids(
@@ -470,7 +491,6 @@ impl ApiClient {
 
     fn log_out(&mut self) {
         self.auth = None;
-        self.auth_manager.delete_auth();
     }
 
     fn get_authorization_header(&mut self) -> String {

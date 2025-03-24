@@ -35,10 +35,14 @@ pub async fn register(
     Ok(())
 }
 
-pub fn logout(storage: SharedStorage) {
+pub async fn logout(client: SharedApiClient, storage: SharedStorage) -> Result<(), AuthError> {
+    client.logout().await?;
+
     storage.remove("access_token");
     storage.remove("refresh_token");
     storage.remove("user_id");
-    
+
     *IS_AUTHENTICATED.write() = false;
+
+    Ok(())
 }

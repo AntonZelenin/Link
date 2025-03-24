@@ -1,5 +1,7 @@
 use crate::messenger::MessengerApp;
 use dioxus::prelude::*;
+use lcore::api::client::SharedApiClient;
+use lcore::api::schemas::AuthError;
 use lcore::auth;
 use lcore::prelude::SharedStorage;
 
@@ -26,11 +28,12 @@ pub fn AppsView() -> Element {
         }
     }
 }
-
 #[component]
 pub fn Menu() -> Element {
     let mut show_menu = use_signal(|| false);
+    let error = use_signal::<Option<String>>(|| None);
     let storage = use_context::<SharedStorage>();
+    let client = use_context::<SharedApiClient>();
 
     rsx! {
         div {
@@ -45,10 +48,32 @@ pub fn Menu() -> Element {
             if show_menu() {
                 div {
                     class: "menu-popup",
+
+                    if let Some(msg) = &*error.read() {
+                        div {
+                            class: "menu-error",
+                            "{msg}"
+                        }
+                    }
+
                     button {
                         class: "menu-button",
                         onclick: move |_| {
-                            auth::logout(storage.clone());
+                            let client = client.clone();
+                            let storage = storage.clone();
+                            let mut error = error.to_owned();
+                            spawn(async move {
+                                match auth::logout(client, storage).await {
+                                    Ok(_) => {}
+                                    Err(err) => {
+                                        match err {
+                                            AuthError::ApiError(msg) => {
+                                                error.set(Some(msg));
+                                            }
+                                        }
+                                    }
+                                }
+                            });
                         },
                         "Log out"
                     }
