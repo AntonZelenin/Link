@@ -82,9 +82,7 @@ pub fn LoginForm() -> Element {
                 let storage = storage.clone();
                 spawn(async move {
                     match auth::login(req, client, storage).await {
-                        Ok(()) => {
-                            *IS_AUTHENTICATED.write() = true;
-                        }
+                        Ok(()) => {}
                         Err(e) => {
                             match e {
                                 AuthError::ApiError(msg) => {
@@ -190,9 +188,7 @@ pub fn RegisterForm() -> Element {
                 let storage = storage.clone();
                 spawn(async move {
                     match auth::register(req, client, storage).await {
-                        Ok(()) => {
-                            *IS_AUTHENTICATED.write() = true;
-                        }
+                        Ok(()) => {}
                         Err(e) => {
                             match e {
                                 RegisterError::ValidationErrors(map) => {

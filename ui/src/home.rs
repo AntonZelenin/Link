@@ -2,7 +2,6 @@ use crate::apps::AppsView;
 use crate::login;
 use dioxus::prelude::*;
 use lcore::prelude::*;
-use lcore::state::AppComponent;
 
 const CSS: Asset = asset!("/assets/styling/home.css");
 const GENERIC_CSS: Asset = asset!("/assets/styling/generic.css");
