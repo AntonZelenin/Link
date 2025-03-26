@@ -1,5 +1,7 @@
 use crate::apps::AppsView;
 use crate::login;
+use dcore::state::app::get_active_app;
+use dcore::state::auth::SharedAuthState;
 use dioxus::prelude::*;
 use lcore::prelude::*;
 
@@ -8,6 +10,8 @@ const GENERIC_CSS: Asset = asset!("/assets/styling/generic.css");
 
 #[component]
 pub fn App() -> Element {
+    let auth_state = use_context::<SharedAuthState>();
+
     rsx! {
         document::Link { rel: "stylesheet", href: CSS }
         document::Link { rel: "stylesheet", href: GENERIC_CSS }
@@ -15,7 +19,7 @@ pub fn App() -> Element {
         div {
             class: "app-container",
             {
-                if *IS_AUTHENTICATED.read() {
+                if auth_state.is_authenticated() {
                     rsx! {
                         AppView {}
                         AppsView {}

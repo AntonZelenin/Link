@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+dcore = { workspace = true, path = "dioxus-core" }
 dioxus = { workspace = true, features = ["router"] }
 lcore = { workspace = true, package = "link-core" }
 log = { workspace = true }

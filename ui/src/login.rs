@@ -1,3 +1,5 @@
+use dcore::state::auth::SharedAuthState;
+use dcore::utils::form_values_to_string;
 use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::hooks::use_signal;
@@ -5,7 +7,6 @@ use dioxus::prelude::*;
 use lcore::api::client::SharedApiClient;
 use lcore::api::schemas::{AuthError, LoginRequest, RegisterError, RegisterRequest};
 use lcore::prelude::*;
-use lcore::third_party::utils::form_values_to_string;
 use lcore::{auth, utils};
 use validator::Validate;
 
@@ -56,10 +57,12 @@ pub fn Login() -> Element {
 
 #[component]
 pub fn LoginForm() -> Element {
-    let mut error = use_signal(|| String::new());
-    let mut processing = use_signal(|| false);
+    let auth_state = use_context::<SharedAuthState>();
     let client = use_context::<SharedApiClient>();
     let storage = use_context::<SharedStorage>();
+
+    let mut error = use_signal(|| String::new());
+    let mut processing = use_signal(|| false);
 
     rsx! {
         form {
@@ -78,10 +81,11 @@ pub fn LoginForm() -> Element {
                     }
                 };
 
+                let auth_state = auth_state.clone();
                 let client = client.clone();
                 let storage = storage.clone();
                 spawn(async move {
-                    match auth::login(req, client, storage).await {
+                    match auth::login(req, client, storage, auth_state).await {
                         Ok(()) => {}
                         Err(e) => {
                             match e {
@@ -142,11 +146,13 @@ pub fn LoginForm() -> Element {
 
 #[component]
 pub fn RegisterForm() -> Element {
-    let mut error_username = use_signal(|| String::new());
-    let mut error_password = use_signal(|| String::new());
-    let mut processing = use_signal(|| false);
+    let auth_state = use_context::<SharedAuthState>();
     let client = use_context::<SharedApiClient>();
     let storage = use_context::<SharedStorage>();
+
+    let mut error_password = use_signal(|| String::new());
+    let mut error_username = use_signal(|| String::new());
+    let mut processing = use_signal(|| false);
 
     rsx! {
         form {
@@ -184,10 +190,11 @@ pub fn RegisterForm() -> Element {
                     return;
                 }
 
+                let auth_state = auth_state.clone();
                 let client = client.clone();
                 let storage = storage.clone();
                 spawn(async move {
-                    match auth::register(req, client, storage).await {
+                    match auth::register(req, client, storage, auth_state).await {
                         Ok(()) => {}
                         Err(e) => {
                             match e {

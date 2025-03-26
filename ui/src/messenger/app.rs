@@ -3,6 +3,7 @@ use dioxus::core_macro::{component, rsx};
 use dioxus::dioxus_core::Element;
 use dioxus::hooks::use_signal;
 use dioxus::prelude::*;
+use dcore::state::app::set_active_app;
 use lcore::prelude::*;
 
 const CSS: Asset = asset!("/assets/styling/messenger/main.css");

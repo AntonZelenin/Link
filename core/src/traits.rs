@@ -16,3 +16,9 @@ impl<T: Serialize> ToJson for T {
         serde_json::to_value(self).unwrap()
     }
 }
+
+pub trait AuthState {
+    fn set_authenticated(&self);
+    fn set_not_authenticated(&self);
+    fn is_authenticated(&self) -> bool;
+}

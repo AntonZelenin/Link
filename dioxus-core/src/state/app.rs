@@ -1,15 +1,11 @@
-// todo dioxus in core!
-use crate::storage::SharedStorage;
+use crate::state::types::AppComponent;
 use dioxus::prelude::*;
+use lcore::prelude::*;
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::sync::RwLock;
 
 const ACTIVE_APP_KEY: &str = "active_app";
-
-pub type AppComponent = fn() -> Element;
-
-pub static IS_AUTHENTICATED: GlobalSignal<bool> = Global::new(|| false);
 pub static ACTIVE_APP: GlobalSignal<Option<String>> = Global::new(|| None);
 
 static APP_REGISTRY: Lazy<RwLock<HashMap<String, AppComponent>>> =

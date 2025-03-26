@@ -5,12 +5,13 @@ members = [
     "ui",
     "web",
     "desktop",
-    "mobile",
+    "mobile", "dioxus-core",
 ]
 
 [workspace.dependencies]
-lcore = { package = "link-core", path = "core" }
+dcore = { package = "dioxus-core", path = "dioxus-core" }
 dioxus = { version = "0.6" }
+lcore = { package = "link-core", path = "core" }
 log = "0.4.26"
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0.134"

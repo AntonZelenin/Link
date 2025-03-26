@@ -1,4 +1,6 @@
 use crate::storage::get_storage;
+use dcore::state::app::{load_active_app, register_app};
+use dcore::state::auth::{DioxusAuthState, SharedAuthState};
 use dioxus::prelude::*;
 use js_sys::eval;
 use lcore::prelude::*;
@@ -31,11 +33,16 @@ pub fn WebApp() -> Element {
 }
 
 fn init() {
+    let auth_state = SharedAuthState::new();
+    use_context_provider(|| auth_state.clone());
+
     let storage = SharedStorage::new(get_storage());
     use_context_provider(|| storage.clone());
 
     let auth_manager = lcore::auth::factory::get_auth_manager(storage.clone());
-    *IS_AUTHENTICATED.write() = auth_manager.is_authenticated();
+    if auth_manager.is_authenticated() {
+        auth_state.set_authenticated();
+    }
 
     let shared_client = lcore::api::factory::get_shared_api_client(storage.clone());
     use_context_provider(|| shared_client);
