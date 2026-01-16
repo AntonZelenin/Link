@@ -8,6 +8,7 @@ use lcore::api::client::SharedApiClient;
 use lcore::api::schemas::{AuthError, LoginRequest, RegisterError, RegisterRequest};
 use lcore::prelude::*;
 use lcore::{auth, utils};
+use manganis::asset;
 use validator::Validate;
 
 const CSS: Asset = asset!("/assets/styling/login.css");

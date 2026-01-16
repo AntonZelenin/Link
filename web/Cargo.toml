@@ -8,6 +8,7 @@ dcore = { workspace = true }
 dioxus = { workspace = true, features = ["router"] }
 lcore = { workspace = true }
 log = { workspace = true }
+manganis = { workspace = true }
 toml = { workspace = true }
 ui = { workspace = true }
 fern = "0.7.1"

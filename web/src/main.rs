@@ -4,6 +4,7 @@ use dcore::state::auth::SharedAuthState;
 use dioxus::prelude::*;
 use js_sys::eval;
 use lcore::prelude::*;
+use manganis::asset;
 use ui::messenger;
 
 mod config;

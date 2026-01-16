@@ -5159,6 +5159,7 @@ dependencies = [
  "dioxus",
  "dioxus-core 0.1.0",
  "link-core",
+ "manganis",
  "validator",
 ]
 
@@ -5489,6 +5490,7 @@ dependencies = [
  "js-sys",
  "link-core",
  "log",
+ "manganis",
  "serde",
  "toml 0.9.11+spec-1.1.0",
  "ui",

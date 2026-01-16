@@ -7,4 +7,5 @@ edition = "2024"
 dcore = { workspace = true }
 dioxus = { workspace = true }
 lcore = { workspace = true }
+manganis = { workspace = true }
 validator = { version = "0.20", features = ["derive"] }

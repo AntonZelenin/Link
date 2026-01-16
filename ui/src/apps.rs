@@ -5,6 +5,7 @@ use lcore::api::client::SharedApiClient;
 use lcore::api::schemas::AuthError;
 use lcore::auth;
 use lcore::prelude::*;
+use manganis::asset;
 
 const CSS: Asset = asset!("/assets/styling/apps.css");
 

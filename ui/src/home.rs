@@ -4,6 +4,7 @@ use dcore::state::app::get_active_app;
 use dcore::state::auth::SharedAuthState;
 use dioxus::prelude::*;
 use lcore::prelude::*;
+use manganis::asset;
 
 const CSS: Asset = asset!("/assets/styling/home.css");
 const GENERIC_CSS: Asset = asset!("/assets/styling/generic.css");

@@ -5,6 +5,7 @@ use dioxus::hooks::use_signal;
 use dioxus::prelude::*;
 use dcore::state::app::set_active_app;
 use lcore::prelude::*;
+use manganis::asset;
 
 const CSS: Asset = asset!("/assets/styling/messenger/main.css");
 pub const NAME: &str = "messenger";

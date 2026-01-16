@@ -1,0 +1,10 @@
+[application]
+name = "link-ui"
+
+[web.resource]
+# Asset directory for UI library
+asset_dir = "assets"
+
+[bundle]
+identifier = "com.link.ui"
+publisher = "Link"

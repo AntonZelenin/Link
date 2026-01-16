@@ -1,0 +1,17 @@
+[application]
+name = "web"
+default_platform = "web"
+
+[web.app]
+title = "< L ї n k >"
+base_path = ""
+
+[web.resource.dev]
+style = []
+
+[web.watcher]
+watch_path = ["src", "../ui/src", "assets", "../ui/assets"]
+
+[bundle]
+identifier = "com.link.web"
+publisher = "Link"
