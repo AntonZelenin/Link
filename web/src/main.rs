@@ -1,6 +1,6 @@
 use crate::storage::get_storage;
 use dcore::state::app::{load_active_app, register_app};
-use dcore::state::auth::{DioxusAuthState, SharedAuthState};
+use dcore::state::auth::SharedAuthState;
 use dioxus::prelude::*;
 use js_sys::eval;
 use lcore::prelude::*;

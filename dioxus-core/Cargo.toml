@@ -5,5 +5,5 @@ edition = "2024"
 
 [dependencies]
 dioxus = { workspace = true }
-lcore = { workspace = true, package = "link-core" }
+lcore = { workspace = true }
 once_cell = "1.21.1"
