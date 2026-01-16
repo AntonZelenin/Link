@@ -68,6 +68,7 @@ pub fn LoginForm() -> Element {
     rsx! {
         form {
             onsubmit: move |ev| {
+                ev.prevent_default();
                 processing.set(true);
                 error.set(String::new());
 
@@ -158,6 +159,7 @@ pub fn RegisterForm() -> Element {
     rsx! {
         form {
             onsubmit: move |ev| {
+                ev.prevent_default();
                 processing.set(true);
                 error_username.set("".to_string());
                 error_password.set("".to_string());
